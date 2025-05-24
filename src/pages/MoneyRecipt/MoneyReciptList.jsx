@@ -2,9 +2,10 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
+import { FaPlus } from "react-icons/fa";
 
-function DataList() {
+function MoneyReciptList() {
   const [dataList, setDataList] = useState([]);
   const [error, setError] = useState("");
   const { token } = useAuth();
@@ -12,7 +13,7 @@ function DataList() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/data", {
+        const res = await axios.get("http://localhost:5000/api/money-receipt", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setDataList(res.data);
@@ -26,25 +27,33 @@ function DataList() {
 
   return (
     <div className="p-8 flex flex-col items-center">
-      <h1 className="text-3xl font-bold mb-6">Data List</h1>
+      <div className="flex justify-between items-start w-full max-w-6xl">
+        <h1 className="text-3xl font-bold mb-6">Money Receipt List</h1>
+        <Link
+          to={"/money-receipt/new"}
+          className="inline-block bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+        >
+          <p className="flex justify-center items-center gap-2">
+            <FaPlus size={20} />
+            Add New Money Receipt
+          </p>
+        </Link>
+      </div>
 
       {error && <p className="text-red-600 mb-4">{error}</p>}
 
       {dataList.length === 0 ? (
-        <p>No data found.</p>
+        <p className="text-gray-600">No Money Receipt Found.</p>
       ) : (
-        <div className="w-full max-w-4xl overflow-x-auto">
+        <div className="w-full max-w-6xl overflow-x-auto">
           <table className="min-w-full border border-gray-300 rounded-lg">
             <thead className="bg-gray-200">
               <tr>
                 <th className="text-left px-4 py-3 border-b border-gray-300">
-                  Title
+                  Policy Number
                 </th>
                 <th className="text-left px-4 py-3 border-b border-gray-300">
-                  Content
-                </th>
-                <th className="text-left px-4 py-3 border-b border-gray-300">
-                  View
+                  Action
                 </th>
               </tr>
             </thead>
@@ -52,17 +61,14 @@ function DataList() {
               {dataList.map((item) => (
                 <tr key={item._id} className="hover:bg-gray-100">
                   <td className="px-4 py-3 border-b border-gray-300">
-                    {item.title}
-                  </td>
-                  <td className="px-4 py-3 border-b border-gray-300">
-                    {item.content}
+                    {item.policyNumber}
                   </td>
                   <td className="px-4 py-3 border-b border-gray-300">
                     <Link
-                      to={`/data/${item._id}`}
+                      to={`/money-receipt/${item._id}`}
                       className="text-blue-600 hover:underline"
                     >
-                      View
+                      View Money Receipt
                     </Link>
                   </td>
                 </tr>
@@ -75,4 +81,4 @@ function DataList() {
   );
 }
 
-export default DataList;
+export default MoneyReciptList;

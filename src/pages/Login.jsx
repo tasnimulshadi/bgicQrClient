@@ -36,25 +36,26 @@ function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <form
         onSubmit={handleLogin}
-        className="max-w-md w-full p-6 bg-gray-300 rounded shadow-md"
+        className="max-w-md w-full p-6 bg-gray-200 rounded shadow-md"
       >
+        <h1 className="text-center text-2xl mb-4 font-semibold">- LOGIN -</h1>
         <input
           type="text"
           placeholder="User ID"
           value={userId}
           onChange={(e) => setUserId(e.target.value)}
-          className="w-full mb-4 px-4 py-2 border bg-gray-50 border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full mb-4 px-4 py-2 border bg-gray-50  border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <input
           type="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full mb-6 px-4 py-2 border bg-gray-50  border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full mb-6 px-4 py-2 border bg-gray-50   border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition font-semibold cursor-pointer"
         >
           Login
         </button>

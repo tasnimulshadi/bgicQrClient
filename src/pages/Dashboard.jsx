@@ -9,24 +9,6 @@ function Dashboard() {
   const [data, setData] = useState([
     {
       id: "1",
-      name: "Data",
-      route: {
-        name: "Data",
-        list: "/data",
-        add: "/data/new",
-      },
-    },
-    {
-      id: "2",
-      name: "Data of Something",
-      route: {
-        name: "Something",
-        list: "/data",
-        add: "/data/new",
-      },
-    },
-    {
-      id: "3",
       name: "Money Receipt",
       route: {
         name: "Money Receipt",

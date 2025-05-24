@@ -2,12 +2,11 @@ import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import PrivateRoute from "./context/PrivateRoute";
 import Dashboard from "./pages/Dashboard";
-import DataEdit from "./pages/DataEdit";
-import DataForm from "./pages/DataForm";
-import DataList from "./pages/DataList";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
-import SingleData from "./pages/SingleData";
+import MoneyReciptList from "./pages/MoneyRecipt/MoneyReciptList";
+import MoneyReciptForm from "./pages/MoneyRecipt/MoneyReciptForm";
+import MoneyReciptView from "./pages/MoneyRecipt/MoneyReciptView";
 
 function App() {
   return (
@@ -25,32 +24,35 @@ function App() {
               </PrivateRoute>
             }
           />
+
+          {/* Money Receipt */}
           <Route
-            path="/data/new"
+            path="/money-receipt"
             element={
               <PrivateRoute>
-                <DataForm />
+                <MoneyReciptList />
               </PrivateRoute>
             }
           />
           <Route
-            path="/data"
+            path="/money-receipt/new"
             element={
               <PrivateRoute>
-                <DataList />
+                <MoneyReciptForm />
               </PrivateRoute>
             }
           />
           <Route
-            path="/data/edit/:id"
+            path="/money-receipt/edit/:id"
             element={
               <PrivateRoute>
-                <DataEdit />
+                <MoneyReciptForm />
               </PrivateRoute>
             }
           />
+
           {/* this one stays public */}
-          <Route path="/data/:id" element={<SingleData />} />
+          <Route path="/money-receipt/:id" element={<MoneyReciptView />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
