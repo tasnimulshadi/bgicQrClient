@@ -1,5 +1,4 @@
 import axios from "axios";
-import { QRCodeSVG } from "qrcode.react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -58,10 +57,6 @@ function MoneyReciptView() {
   if (error) return <p className="text-red-600 p-4">{error}</p>;
   if (!data) return <p className="p-4 text-center">Loading...</p>;
 
-  // Construct full URL for this page for QR code
-  // You might want to change the base URL for production
-  const pageUrl = `${window.location.origin}/money-receipt/${id}`;
-
   return (
     <div className="p-4 w-full max-w-6xl mx-auto">
       {/* <h1 className="text-3xl font-bold mb-4">{data.title}</h1>
@@ -90,14 +85,6 @@ function MoneyReciptView() {
       )}
 
       <TravelCertificate data={data} />
-
-      <div className="mt-8 text-center flex flex-col justify-center items-center">
-        <h2 className="text-xl font-semibold mb-2">
-          Scan QR Code for this page
-        </h2>
-        <QRCodeSVG value={pageUrl} size={180} className="border-2 p-2" />
-        <p className="mt-2 text-sm text-gray-600 break-words">{pageUrl}</p>
-      </div>
     </div>
   );
 }
