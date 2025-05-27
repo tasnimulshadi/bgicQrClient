@@ -1,8 +1,8 @@
 # React + Vite
 
 Frontend
-Create The Money Receipt Page (same as design)
-Create Money Receipt Pdf (same as design)
+Create The OMP Page (same as design)
+Create OMP Pdf (same as design)
 Create Dashboard Items
 
 Backend

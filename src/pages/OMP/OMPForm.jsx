@@ -6,23 +6,23 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import moment from "moment";
 
-const dummy = {
-  policyNumber: "BGIC/DZO/MISC/OMP-1250/05/2025",
-  issuingDate: "2025-05-19",
-  plan: "B : Zone 2 Worldwide Excl. USA, CANADA",
-  destinationCountries: ["Poland", "Turkey", "Saudi Arabia"],
-  travelStartDate: "2025-07-10",
-  travelEndDate: "2025-08-06",
-  countryOfResidence: "Bangladesh",
-  telephone: "+8801671558822",
-  insuredPerson: {
-    fullName: "AMAYRA TARANNUM",
-    dateOfBirth: "2019-11-12",
-    passportNumber: "A08753703",
-  },
-};
+// const dummy = {
+//   policyNumber: "BGIC/DZO/MISC/OMP-1250/05/2025",
+//   issuingDate: "2025-05-19",
+//   plan: "B : Zone 2 Worldwide Excl. USA, CANADA",
+//   destinationCountries: ["Poland", "Turkey", "Saudi Arabia"],
+//   travelStartDate: "2025-07-10",
+//   travelEndDate: "2025-08-06",
+//   countryOfResidence: "Bangladesh",
+//   telephone: "+8801671558822",
+//   insuredPerson: {
+//     fullName: "AMAYRA TARANNUM",
+//     dateOfBirth: "2019-11-12",
+//     passportNumber: "A08753703",
+//   },
+// };
 
-function MoneyReciptForm() {
+function OMPForm() {
   const params = useParams();
   const [error, setError] = useState("");
   const { token } = useAuth();
@@ -49,7 +49,7 @@ function MoneyReciptForm() {
     const fetchDataById = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/money-receipt/${params.id}`
+          `http://localhost:5000/api/omp/${params.id}`
         );
         setData(res.data);
       } catch (err) {
@@ -93,50 +93,53 @@ function MoneyReciptForm() {
     try {
       if (params.id) {
         // Edit
-        await axios.patch(
-          `http://localhost:5000/api/money-receipt/${data._id}`,
-          data,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-
-        navigate(`/money-receipt/${data._id}`);
-      } else {
-        // Create
-        await axios.post("http://localhost:5000/api/money-receipt", data, {
+        await axios.patch(`http://localhost:5000/api/omp/${data._id}`, data, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        navigate("/money-receipt");
+        navigate(`/omp/${data._id}`, { replace: true });
+      } else {
+        // Create
+        await axios.post("http://localhost:5000/api/omp", data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        navigate("/omp", { replace: true });
       }
     } catch (err) {
       setError(err.response?.data?.error || "Failed to submit data");
     }
   };
 
+  function handlePolicyNumberChange(e) {
+    setData({
+      ...data,
+      policyNumber: e.target.value,
+    });
+  }
+
   return (
-    <div className="p-8 flex flex-col items-center">
+    <div className="flex flex-col items-center ">
       <h1 className="text-3xl font-bold mb-6">
         {params.id ? "Edit Policy" : "Add New Policy"}
       </h1>
 
       {error && <p className="text-red-600 mb-4">{error}</p>}
 
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-2xl grid grid-cols-1 gap-6"
-      >
-        <div>
-          <label className="block mb-1 font-medium">Policy Number</label>
-          <input
-            type="text"
-            name="policyNumber"
-            value={data.policyNumber}
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-2 border rounded"
-          />
+      <form onSubmit={handleSubmit} className=" grid grid-cols-1 gap-6">
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block mb-1 font-medium">Policy Number</label>
+            <input
+              type="text"
+              name="policyNumber"
+              value={data.policyNumber}
+              // onChange={handleChange}
+              onChange={handlePolicyNumberChange}
+              required
+              className="w-full px-4 py-2 border rounded"
+            />
+          </div>
         </div>
 
         <div className="grid sm:grid-cols-2 gap-4">
@@ -301,4 +304,4 @@ function MoneyReciptForm() {
   );
 }
 
-export default MoneyReciptForm;
+export default OMPForm;

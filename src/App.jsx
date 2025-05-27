@@ -3,60 +3,67 @@ import Navbar from "./components/Navbar";
 import PrivateRoute from "./context/PrivateRoute";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
-import NotFound from "./pages/NotFound";
-import MoneyReciptList from "./pages/MoneyRecipt/MoneyReciptList";
-import MoneyReciptForm from "./pages/MoneyRecipt/MoneyReciptForm";
-import MoneyReciptView from "./pages/MoneyRecipt/MoneyReciptView";
+// import NotFound from "./pages/NotFound";
+import OMPList from "./pages/OMP/OMPList";
+import OMPForm2 from "./pages/OMP/OMPForm2";
+import OMP from "./pages/OMP/OMP";
+import OMPPdf from "./pages/OMP/OMPPdf";
 
 function App() {
   return (
-    <>
+    <div className="bg-gray-50">
       <Router>
         <Navbar />
 
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route
-            path="/dashboard"
-            element={
-              <PrivateRoute>
-                <Dashboard />
-              </PrivateRoute>
-            }
-          />
+        <div className="mx-auto max-w-6xl p-4 min-h-screen">
+          <Routes>
+            <Route path="/" element={<Login />} />
+            <Route
+              path="/dashboard"
+              element={
+                <PrivateRoute>
+                  <Dashboard />
+                </PrivateRoute>
+              }
+            />
 
-          {/* Money Receipt */}
-          <Route
-            path="/money-receipt"
-            element={
-              <PrivateRoute>
-                <MoneyReciptList />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/money-receipt/new"
-            element={
-              <PrivateRoute>
-                <MoneyReciptForm />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/money-receipt/edit/:id"
-            element={
-              <PrivateRoute>
-                <MoneyReciptForm />
-              </PrivateRoute>
-            }
-          />
+            {/* OMP */}
+            <Route
+              path="/omp"
+              element={
+                <PrivateRoute>
+                  <OMPList />
+                </PrivateRoute>
+              }
+            />
+            {/* OMP */}
+            <Route
+              path="/omp/new"
+              element={
+                <PrivateRoute>
+                  <OMPForm2 />
+                </PrivateRoute>
+              }
+            />
+            {/* OMP */}
+            <Route
+              path="/omp/edit/:id"
+              element={
+                <PrivateRoute>
+                  <OMPForm2 />
+                </PrivateRoute>
+              }
+            />
 
-          {/* this one stays public */}
-          <Route path="/money-receipt/:id" element={<MoneyReciptView />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            {/* this one stays public */}
+            {/* OMP */}
+            <Route path="/omp/:id" element={<OMP />} />
+            {/* <Route path="*" element={<NotFound />} /> */}
+            <Route path="*" element={<OMPPdf />} />
+          </Routes>
+        </div>
       </Router>
-    </>
+    </div>
   );
 }
 

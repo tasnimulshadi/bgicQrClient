@@ -18,7 +18,7 @@ function Navbar() {
 
   return (
     <nav className="bg-gray-200 py-4">
-      <div className="mx-auto px-4" style={{ maxWidth: "1140px" }}>
+      <div className="mx-auto max-w-6xl">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             <Link

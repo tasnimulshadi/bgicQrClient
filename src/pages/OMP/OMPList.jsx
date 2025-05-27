@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { FaPlus } from "react-icons/fa";
 
-function MoneyReciptList() {
+function OMPList() {
   const [dataList, setDataList] = useState([]);
   const [error, setError] = useState("");
   const { token } = useAuth();
@@ -13,7 +13,7 @@ function MoneyReciptList() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/money-receipt", {
+        const res = await axios.get("http://localhost:5000/api/omp", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setDataList(res.data);
@@ -26,16 +26,16 @@ function MoneyReciptList() {
   }, [token]);
 
   return (
-    <div className="p-8 flex flex-col items-center">
+    <div className="flex flex-col items-center">
       <div className="flex justify-between items-start w-full max-w-6xl">
-        <h1 className="text-3xl font-bold mb-6">Money Receipt List</h1>
+        <h1 className="text-3xl font-bold mb-6">OMP List</h1>
         <Link
-          to={"/money-receipt/new"}
+          to={"/omp/new"}
           className="inline-block bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
         >
           <p className="flex justify-center items-center gap-2">
             <FaPlus size={20} />
-            Add New Money Receipt
+            Add New OMP
           </p>
         </Link>
       </div>
@@ -43,7 +43,7 @@ function MoneyReciptList() {
       {error && <p className="text-red-600 mb-4">{error}</p>}
 
       {dataList.length === 0 ? (
-        <p className="text-gray-600">No Money Receipt Found.</p>
+        <p className="text-gray-600">No OMP Found.</p>
       ) : (
         <div className="w-full max-w-6xl overflow-x-auto">
           <table className="min-w-full border border-gray-300 rounded-lg">
@@ -52,7 +52,7 @@ function MoneyReciptList() {
                 <th className="text-left px-4 py-3 border-b border-gray-300">
                   Policy Number
                 </th>
-                <th className="text-left px-4 py-3 border-b border-gray-300">
+                <th className="text-right px-4 py-3 border-b border-gray-300">
                   Action
                 </th>
               </tr>
@@ -63,12 +63,12 @@ function MoneyReciptList() {
                   <td className="px-4 py-3 border-b border-gray-300">
                     {item.policyNumber}
                   </td>
-                  <td className="px-4 py-3 border-b border-gray-300">
+                  <td className="px-4 py-3 border-b border-gray-300 text-right">
                     <Link
-                      to={`/money-receipt/${item._id}`}
-                      className="text-blue-600 hover:underline"
+                      to={`/omp/${item._id}`}
+                      className="text-blue-600 hover:underline font-semibold"
                     >
-                      View Money Receipt
+                      View OMP
                     </Link>
                   </td>
                 </tr>
@@ -81,4 +81,4 @@ function MoneyReciptList() {
   );
 }
 
-export default MoneyReciptList;
+export default OMPList;

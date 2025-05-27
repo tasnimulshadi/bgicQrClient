@@ -1,21 +1,112 @@
+import axios from "axios";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import NotFound from "../NotFound";
 import moment from "moment";
+import {
+  FaChevronDown,
+  FaChevronUp,
+  FaTrashAlt,
+  FaEdit,
+  FaDownload,
+} from "react-icons/fa";
 import { QRCodeSVG } from "qrcode.react";
-import { useState } from "react";
-import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 
-export default function TravelCertificate({ data }) {
+export default function OMP() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { isAuthenticated, token } = useAuth();
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
+  const [notFound, setNotFound] = useState(false);
+
+  useEffect(() => {
+    const fetchDataById = async () => {
+      try {
+        const res = await axios.get(`http://localhost:5000/api/omp/${id}`);
+        setData(res.data);
+      } catch (err) {
+        if (err.response?.status === 404) {
+          setNotFound(true);
+        } else {
+          setError(err.response?.data?.error || "Failed to load data");
+        }
+      }
+    };
+
+    fetchDataById();
+  }, [id]);
+
+  const handleEdit = () => {
+    navigate(`/omp/edit/${id}`); // Adjust route based on your app
+  };
+
+  const handleDelete = async () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this data? This action cannot be undone."
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await axios.delete(`http://localhost:5000/api/omp/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      navigate("/omp"); // Redirect to data list after delete
+    } catch (err) {
+      setError(err.response?.data?.error || "Failed to delete data");
+    }
+  };
+
+  const handleDownload = () => {
+    alert("PDF is not available yet.");
+  };
+
+  if (notFound) return <NotFound />;
+  if (error) return <p className="text-red-600 p-4">{error}</p>;
+  if (!data) return <p className="p-4 text-center">Loading...</p>;
+
   return (
-    <div className="mx-auto bg-white shadow-lg rounded-lg p-6 w-6xl">
-      <Header />
-      <PolicyInfo data={data} />
-      <Benefits />
-      <Premium premium={data.premium} />
-      <Assistance />
-      <Authoriaztion id={data._id} />
+    <div className="">
+      <div className="flex gap-4 mb-4 justify-between">
+        {isAuthenticated && (
+          <div className="flex gap-3">
+            <button
+              onClick={handleEdit}
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 transition cursor-pointer shadow-2xl flex gap-2 items-center"
+            >
+              Edit <FaEdit />
+            </button>
+            <button
+              onClick={handleDelete}
+              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 transition cursor-pointer shadow-2xl flex gap-2 items-center"
+            >
+              Delete <FaTrashAlt />
+            </button>
+          </div>
+        )}
+        <button
+          onClick={handleDownload}
+          className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-700 transition cursor-pointer shadow-2xl flex gap-2 items-center"
+        >
+          Download Pdf <FaDownload />
+        </button>
+      </div>
+
+      <div className="mx-auto bg-white shadow-lg rounded-lg p-6 w-full">
+        <Header />
+        <PolicyInfo data={data} />
+        <Benefits />
+        <Premium premium={data.premium} />
+        <Assistance />
+        <Authoriaztion id={data._id} />
+      </div>
     </div>
   );
 }
 
+// Component
 function Header() {
   return (
     <header className="bg-red-400">
@@ -411,47 +502,51 @@ function Assistance() {
 
           {/* Contact Table */}
           <table className="my-4 w-full text-center border-1 border-gray-500 text-xl">
-            <tr className="bg-[#c0e3a9]">
-              <td className="border-1 border-gray-500 py-1" colSpan={2}>
-                Available 24 Hrs. / 7 days
-              </td>
-            </tr>
-            <tr>
-              <td className="border-1 w-1/2 border-gray-500 py-1">Country</td>
-              <td className="border-1 w-1/2 border-gray-500">
-                Contact Numbers
-              </td>
-            </tr>
-            <tr>
-              <td className="border-1 w-1/2 border-gray-500 py-1">
-                USA / Canada
-              </td>
-              <td className="border-1 w-1/2 border-gray-500">
-                +1 514 448 4417
-              </td>
-            </tr>
-            <tr>
-              <td className="border-1 w-1/2 border-gray-500 py-1">
-                France / Europe
-              </td>
-              <td className="border-1 w-1/2 border-gray-500">
-                +33 9 75 18 52 99
-              </td>
-            </tr>
-            <tr>
-              <td className="border-1 w-1/2 border-gray-500 py-1">
-                International
-              </td>
-              <td className="border-1 w-1/2 border-gray-500">+961 9 211 662</td>
-            </tr>
-            <tr className="bg-[#059255]">
-              <td
-                className="border-1 w-1/2 border-gray-500 py-1 text-white"
-                colSpan={2}
-              >
-                Email : request@swanassistance.com
-              </td>
-            </tr>
+            <tbody>
+              <tr className="bg-[#c0e3a9]">
+                <td className="border-1 border-gray-500 py-1" colSpan={2}>
+                  Available 24 Hrs. / 7 days
+                </td>
+              </tr>
+              <tr>
+                <td className="border-1 w-1/2 border-gray-500 py-1">Country</td>
+                <td className="border-1 w-1/2 border-gray-500">
+                  Contact Numbers
+                </td>
+              </tr>
+              <tr>
+                <td className="border-1 w-1/2 border-gray-500 py-1">
+                  USA / Canada
+                </td>
+                <td className="border-1 w-1/2 border-gray-500">
+                  +1 514 448 4417
+                </td>
+              </tr>
+              <tr>
+                <td className="border-1 w-1/2 border-gray-500 py-1">
+                  France / Europe
+                </td>
+                <td className="border-1 w-1/2 border-gray-500">
+                  +33 9 75 18 52 99
+                </td>
+              </tr>
+              <tr>
+                <td className="border-1 w-1/2 border-gray-500 py-1">
+                  International
+                </td>
+                <td className="border-1 w-1/2 border-gray-500">
+                  +961 9 211 662
+                </td>
+              </tr>
+              <tr className="bg-[#059255]">
+                <td
+                  className="border-1 w-1/2 border-gray-500 py-1 text-white"
+                  colSpan={2}
+                >
+                  Email : request@swanassistance.com
+                </td>
+              </tr>
+            </tbody>
           </table>
 
           <p>3) Freely provide all relevant information.</p>
@@ -468,7 +563,7 @@ function Assistance() {
 function Authoriaztion({ id }) {
   // Construct full URL for this page for QR code
   // You might want to change the base URL for production
-  const pageUrl = `${window.location.origin}/money-receipt/${id}`;
+  const pageUrl = `${window.location.origin}/omp/${id}`;
 
   return (
     <section className="my-6 flex justify-between items-start">
@@ -491,6 +586,7 @@ function Authoriaztion({ id }) {
   );
 }
 
+// Utility
 function formatCountryList(countries) {
   if (!countries || countries.length === 0) return "";
   if (countries.length === 1) return countries[0];
