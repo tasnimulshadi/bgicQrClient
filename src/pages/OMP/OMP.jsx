@@ -98,7 +98,7 @@ export default function OMP() {
         <Header />
         <PolicyInfo data={data} />
         <Benefits />
-        <Premium premium={data.premium} />
+        <Premium data={data} />
         <Assistance />
         <Authoriaztion id={data._id} />
       </div>
@@ -127,7 +127,7 @@ function PolicyInfo({ data }) {
         <h2 className="text-[#2d455f] font-bold text-xl mb-2">
           TRAVEL HEALTH INSURANCE CERTIFICATE
         </h2>
-        <h3 className="text-lg">{data.plan}</h3>
+        <h3 className="text-lg">{data.typeOfTRV}</h3>
       </div>
 
       {/* form */}
@@ -137,7 +137,7 @@ function PolicyInfo({ data }) {
             <b>POLICY NUMBER:</b> {data.policyNumber}
           </p>
           <p>
-            <b>ISSUING DATE:</b> {moment(data.issuingDate).format("DD/MM/YYYY")}
+            <b>ISSUING DATE:</b> {moment(data.issueDate).format("DD/MM/YYYY")}
           </p>
         </div>
         {/* form table*/}
@@ -150,32 +150,32 @@ function PolicyInfo({ data }) {
           </div>
           <div className="bg-[#d3d3d3] px-1 col-span-2">TELEPHONE NUMBER</div>
           <div className="bg-[#d3d3d3] px-1 col-span-2 font-bold">
-            {formatCountryList(data.destinationCountries)}
+            {formatDestinationList(data.destination)}
           </div>
           <div className="bg-[#d3d3d3] px-1 font-bold">
-            {moment(data.travelStartDate).format("DD/MM/YYYY")}
+            {moment(data.travelDateFrom).format("DD/MM/YYYY")}
           </div>
           <div className="bg-[#d3d3d3] px-1 font-bold">
-            {moment(data.travelEndDate).format("DD/MM/YYYY")}
+            {moment(data.travelDateTo).format("DD/MM/YYYY")}
           </div>
           <div className="bg-[#d3d3d3] px-1 col-span-2 font-bold">
             {data.countryOfResidence}
           </div>
           <div className="bg-[#d3d3d3] px-1 col-span-2 font-bold">
-            {data.telephone}
+            +88{data.mobile}
           </div>
           <div className="bg-[#d3d3d3] px-1 col-span-2">FULL NAME</div>
           <div className="bg-[#d3d3d3] px-1 col-span-2">DATE OF BIRTH</div>
           <div className="bg-[#d3d3d3] px-1 col-span-2">PASSPORT NUMBER</div>
           <div className=" col-span-2"></div>
-          <div className="bg-[#d3d3d3] px-1 col-span-2 font-bold">
-            {data.insuredPerson.fullName}
+          <div className="bg-[#d3d3d3] px-1 col-span-2 font-bold uppercase">
+            {data.firstName} {data.lastName}
           </div>
           <div className="bg-[#d3d3d3] px-1 col-span-2 font-bold">
-            {moment(data.insuredPerson.dateOfBirth).format("DD/MM/YYYY")}
+            {moment(data.dob).format("DD/MM/YYYY")}
           </div>
           <div className="bg-[#d3d3d3] px-1 col-span-2 font-bold">
-            {data.insuredPerson.passportNumber}
+            {data.passport}
           </div>
         </div>
         {/* info */}
@@ -412,12 +412,12 @@ function Benefits() {
   );
 }
 
-function Premium({ premium }) {
+function Premium({ data }) {
   return (
     <section>
       {/* Premium */}
       <h2 className="text-lg font-bold my-2">
-        Premium (including VAT) : BDT {premium}
+        Premium (including VAT) : BDT {Number(data.premium) + Number(data.vat)}
       </h2>
       <div className="text-sm font-bold">
         Above sums insured are per person & per period of cover.
@@ -587,12 +587,14 @@ function Authoriaztion({ id }) {
 }
 
 // Utility
-function formatCountryList(countries) {
-  if (!countries || countries.length === 0) return "";
+function formatDestinationList(destinations) {
+  const countries = destinations.map((d) => d.country).filter(Boolean);
+
+  if (countries.length === 0) return "";
   if (countries.length === 1) return countries[0];
-  return (
-    countries.slice(0, -1).join(", ") +
-    " and " +
-    countries[countries.length - 1]
-  );
+  if (countries.length === 2) return `${countries[0]} and ${countries[1]}`;
+
+  const allButLast = countries.slice(0, -1).join(", ");
+  const last = countries[countries.length - 1];
+  return `${allButLast} and ${last}`;
 }

@@ -1,14 +1,56 @@
-/* eslint-disable no-unused-vars */
 // src/pages/DataForm.jsx
 import axios from "axios";
-import { Fragment, useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import moment from "moment";
 
 export default function OMPForm2() {
-  const [error, setError] = useState("");
+  const params = useParams();
+  const { token } = useAuth();
+  const navigate = useNavigate();
   const policyNumberInputRef = useRef(null);
+
+  const [error, setError] = useState("");
+  const [data, setData] = useState({
+    typeOfTRV: "",
+    ompNumber: "",
+    policyNumber: "",
+    issueDate: moment(new Date()).format("YYYY-MM-DD"),
+    firstName: "",
+    lastName: "",
+    dob: "",
+    gender: "",
+    address: "",
+    mobile: "",
+    email: "",
+    passport: "",
+    destination: [
+      // {
+      //   id: 1748340096882,
+      //   country: "India",
+      //   remarks: "",
+      // },
+    ],
+    travelDateFrom: moment(new Date()).format("YYYY-MM-DD"),
+    travelDays: "",
+    travelDateTo: "",
+    countryOfResidence: "Bangladesh",
+    limitOfCover: "",
+    limitOfCoverCurrency: "",
+    premium: "",
+    vat: "",
+    producer: "Md. Imran Rouf",
+    mrNo: "",
+    mrDate: "",
+    mop: "",
+    chequeNo: "",
+    chequeDate: "",
+    bank: "",
+    bankBranch: "",
+    note: "",
+  });
+  // console.log(data);
 
   const dropdownData = {
     typeOfTRV: [
@@ -43,43 +85,61 @@ export default function OMPForm2() {
       { id: 19, value: "Russia" },
       { id: 20, value: "Turkey" },
     ],
+    currency: [
+      { id: 1, value: "US$" },
+      { id: 2, value: "BDT" },
+      { id: 3, value: "INR" },
+      { id: 4, value: "EUR" },
+    ],
+    mop: [
+      { id: 1, value: "Pay Order" },
+      { id: 2, value: "Bank Transfer" },
+    ],
+    vatPecentage: 30,
   };
 
-  const [data, setData] = useState({
-    typeOfTRV: "",
-    ompNumber: "",
-    policyNumber: "",
-    issueDate: moment(new Date()).format("YYYY-MM-DD"),
-    firstName: "",
-    lastName: "",
-    dob: "",
-    gender: "",
-    address: "",
-    mobile: "",
-    email: "",
-    passport: "",
-    destination: [
-      {
-        id: 1748340096882,
-        country: "India",
-        remarks: "",
-      },
-    ],
-    travelDateFrom: moment(new Date()).format("YYYY-MM-DD"),
-    travelDays: "",
-    travelDateTo: "",
-    //
+  useEffect(() => {
+    const fetchDataById = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:5000/api/omp/${params.id}`
+        );
+        setData(res.data);
+      } catch (err) {
+        setError(err.response?.data?.error || "Failed to load data");
+      }
+    };
 
-    countryOfResidence: "",
-    telephone: "",
-    premium: "",
-    insuredPerson: {
-      fullName: "",
-      dateOfBirth: "",
-      passportNumber: "",
-    },
-  });
-  console.log(data);
+    if (params.id) {
+      fetchDataById();
+    }
+  }, [params]);
+
+  // SUBMIT SUBMIT SUBMIT SUBMIT SUBMIT
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    try {
+      if (params.id) {
+        // Edit
+        await axios.patch(`http://localhost:5000/api/omp/${data._id}`, data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        navigate(`/omp/${data._id}`, { replace: true });
+      } else {
+        // Create
+        await axios.post("http://localhost:5000/api/omp", data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        navigate("/omp", { replace: true });
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || "Failed to submit data");
+    }
+  };
 
   // Destination
   // Edit
@@ -91,7 +151,7 @@ export default function OMPForm2() {
 
   // Destination
   // Add
-  const handleAddMore = () => {
+  const handleDestinationAddMore = () => {
     setData({
       ...data,
       destination: [
@@ -103,7 +163,7 @@ export default function OMPForm2() {
 
   // Destination
   // Delete
-  const handleDelete = (id) => {
+  const handleDestinationDelete = (id) => {
     const filtered = data.destination.filter((item) => item.id !== id);
     setData({ ...data, destination: filtered });
   };
@@ -128,11 +188,17 @@ export default function OMPForm2() {
   }
 
   // Tavel Date From
+  // Tavel Date to
   function handleChange_travelDateFrom(e) {
+    const startDate = e.target.value;
+    const endDate = moment(startDate)
+      .add(data.travelDays, "days")
+      .format("YYYY-MM-DD");
+
     setData({
       ...data,
       travelDateFrom: e.target.value,
-      travelDateTo: "",
+      travelDateTo: endDate,
     });
   }
 
@@ -140,18 +206,31 @@ export default function OMPForm2() {
   // Tavel Date to
   function handleChange_travelDays(e) {
     const value = e.target.value;
-    const futureDate = moment(data.travelDateFrom)
+    const endDate = moment(data.travelDateFrom)
       .add(value, "days")
       .format("YYYY-MM-DD");
 
     // Only allow digits (positive integers)
-    if (/^\d*$/.test(value) && value > 0) {
+    if (/^\d*$/.test(value)) {
       setData({
         ...data,
         travelDays: value,
-        travelDateTo: futureDate,
+        travelDateTo: endDate,
       });
     }
+  }
+
+  // Premium
+  // Vat
+  // Total
+  function handleChange_premium(e) {
+    const premiumValue = e.target.value;
+    const vatValue = (premiumValue * dropdownData.vatPecentage) / 100;
+    setData({
+      ...data,
+      premium: premiumValue,
+      vat: vatValue,
+    });
   }
 
   // Type of TRV
@@ -164,6 +243,15 @@ export default function OMPForm2() {
   // E Mail
   // Passport
   // Tavel Date From
+  // Limit Of Cover
+  // Limit Of Cover Currency
+  // Mr No.
+  // Mr Date
+  // Bank
+  // Bank Branch
+  // Cheque No.
+  // Cheque Date
+  // MOP
   function handleChange(e) {
     const name = e.target.name;
     const value = e.target.value;
@@ -176,11 +264,6 @@ export default function OMPForm2() {
 
   // Date of Birth // Age
   const age = moment().diff(moment(data.dob, "YYYY-MM-DD"), "years");
-  // Tavel Days
-  const travelDays = moment(data.travelDateTo, "YYYY-MM-DD").diff(
-    moment(data.travelDateFrom, "YYYY-MM-DD"),
-    "days"
-  );
 
   return (
     <div className="flex flex-col items-center">
@@ -188,7 +271,7 @@ export default function OMPForm2() {
 
       {error && <p className="text-red-600 mb-4">{error}</p>}
 
-      <form className=" grid grid-cols-1 gap-6 w-full">
+      <form className=" grid grid-cols-1 gap-6 w-full" onSubmit={handleSubmit}>
         {/* Type of TRV = Dropdown */}
         <div>
           <label className="block mb-1 font-medium">Type of TRV</label>
@@ -251,6 +334,8 @@ export default function OMPForm2() {
             />
           </div>
         </div>
+
+        <hr />
 
         {/* Issued Person Info */}
         <div className="grid sm:grid-cols-4 gap-4">
@@ -374,16 +459,19 @@ export default function OMPForm2() {
           </div>
         </div>
 
+        <hr />
+
         {/* Destination*/}
         <div className="space-y-4">
           {data.destination.map((item, index) => (
-            <div key={item.id} className="grid sm:grid-cols-5 gap-4 items-end">
+            <div key={item.id} className="grid sm:grid-cols-7 gap-4 items-end">
               {/* Country Select */}
-              <div className="sm:col-span-2">
+              <div className="sm:col-span-3">
                 <label className="block mb-1 font-medium">Destination</label>
                 <select
                   className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
                   value={item.country}
+                  required
                   onChange={(e) =>
                     handleDestinationChange(index, "country", e.target.value)
                   }
@@ -398,7 +486,7 @@ export default function OMPForm2() {
               </div>
 
               {/* Remarks Input */}
-              <div className="sm:col-span-2">
+              <div className="sm:col-span-3">
                 <label className="block mb-1 font-medium">Remarks</label>
                 <input
                   type="text"
@@ -411,37 +499,37 @@ export default function OMPForm2() {
               </div>
 
               {/* Delete Button */}
-              <div>
-                <button
-                  type="button"
-                  onClick={() => handleDelete(item.id)}
-                  className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 shadow-xl"
-                >
-                  Delete
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => handleDestinationDelete(item.id)}
+                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 shadow-xl border-1 border-red-600"
+              >
+                Delete
+              </button>
             </div>
           ))}
-
-          {/* Add More Button */}
-          <button
-            type="button"
-            onClick={handleAddMore}
-            className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 shadow-xl"
-          >
-            Add More
-          </button>
         </div>
 
         {/* Destination Read Only*/}
-        <div>
-          <label className="block mb-1 font-medium">Destination</label>
-          <input
-            type="text"
-            readOnly
-            className="w-full px-4 py-2 border rounded shadow-xl bg-gray-200"
-            value={formatDestinationList(data.destination)}
-          />
+        <div className="grid sm:grid-cols-6 gap-4 items-end">
+          <div className="sm:col-span-5">
+            <label className="block mb-1 font-medium">Destination</label>
+            <input
+              type="text"
+              readOnly
+              className="w-full px-4 py-2 border rounded shadow-xl bg-gray-200"
+              value={formatDestinationList(data.destination)}
+            />
+          </div>
+
+          {/* Add More Destination Button */}
+          <button
+            type="button"
+            onClick={handleDestinationAddMore}
+            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 shadow-xl border-2 border-blue-600"
+          >
+            {data.destination.length > 0 ? "Add More" : "Add Destination"}
+          </button>
         </div>
 
         {/* Tavel Days */}
@@ -468,7 +556,7 @@ export default function OMPForm2() {
               type="date"
               name="travelDateFrom"
               value={data.travelDateFrom}
-              onChange={handleChange}
+              onChange={handleChange_travelDateFrom}
               required
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
             />
@@ -486,14 +574,225 @@ export default function OMPForm2() {
           </div>
         </div>
 
-        {/*  */}
+        {/* Premium & Cover*/}
+        <div className="grid sm:grid-cols-5 gap-4 items-end">
+          {/* Limit Of Cover */}
+          <div className="sm:col-span-1">
+            <label className="block mb-1 font-medium">Limit Of Cover</label>
+            <input
+              type="number"
+              name="limitOfCover"
+              required
+              inputMode="numeric"
+              value={data.limitOfCover}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+            />
+          </div>
 
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
-        >
-          Submit
-        </button>
+          {/* Limit Of Cover Currency */}
+          <div className="sm:col-span-1">
+            <label className="block mb-1 font-medium">Currency</label>
+            <select
+              name="limitOfCoverCurrency"
+              value={data.limitOfCoverCurrency}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+            >
+              <option value="">Select A Currency</option>
+              {dropdownData.currency.map((item) => (
+                <option key={item.id} value={item.value}>
+                  {item.value}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Premium */}
+          <div className="sm:col-span-1">
+            <label className="block mb-1 font-medium">Premium</label>
+            <input
+              type="number"
+              name="premium"
+              required
+              inputMode="numeric"
+              value={data.premium}
+              onChange={handleChange_premium}
+              className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+            />
+          </div>
+
+          {/* Vat */}
+          <div className="sm:col-span-1">
+            <label className="block mb-1 font-medium">Vat</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={data.vat}
+              readOnly
+              className="w-full px-4 py-2 border rounded shadow-xl bg-gray-200"
+            />
+          </div>
+
+          {/* Total */}
+          <div className="sm:col-span-1">
+            <label className="block mb-1 font-medium">Total</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={Number(data.premium) + Number(data.vat)}
+              readOnly
+              className="w-full px-4 py-2 border rounded shadow-xl bg-gray-200"
+            />
+          </div>
+        </div>
+
+        <hr />
+
+        {/* MR */}
+        <div className="grid sm:grid-cols-2 gap-4 items-end">
+          {/* Mr No. */}
+          <div className="sm:col-span-1">
+            <label className="block mb-1 font-medium">Mr No.</label>
+            <input
+              type="number"
+              name="mrNo"
+              // required
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={data.mrNo}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+            />
+          </div>
+
+          {/* Mr Date */}
+          <div className="sm:col-span-1">
+            <label className="block mb-1 font-medium">Mr Date</label>
+            <input
+              type="date"
+              name="mrDate"
+              value={data.mrDate}
+              onChange={handleChange}
+              // required
+              className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+            />
+          </div>
+        </div>
+
+        {/* Bank Info */}
+        <div className="grid sm:grid-cols-2 gap-4 items-end">
+          {/* MOP */}
+          <div className="sm:col-span-1">
+            <label className="block mb-1 font-medium">MOP</label>
+            <select
+              name="mop"
+              value={data.mop}
+              onChange={handleChange}
+              // required
+              className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+            >
+              <option value="">Select A MOP</option>
+              {dropdownData.mop.map((item) => (
+                <option key={item.id} value={item.value}>
+                  {item.value}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Cheque No. */}
+          <div className="sm:col-span-1">
+            <label className="block mb-1 font-medium">Cheque No</label>
+            <input
+              type="text"
+              name="chequeNo"
+              // required
+              pattern="[0-9]*"
+              value={data.chequeNo}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+            />
+          </div>
+
+          {/* Cheque Date */}
+          <div className="sm:col-span-1">
+            <label className="block mb-1 font-medium">Cheque Date</label>
+            <input
+              type="date"
+              name="chequeDate"
+              value={data.chequeDate}
+              onChange={handleChange}
+              // required
+              className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+            />
+          </div>
+
+          {/* Bank */}
+          <div className="sm:col-span-1">
+            <label className="block mb-1 font-medium">Bank</label>
+            <input
+              type="text"
+              name="bank"
+              // required
+              value={data.bank}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+            />
+          </div>
+
+          {/* Branch */}
+          <div className="sm:col-span-1">
+            <label className="block mb-1 font-medium">Branch</label>
+            <input
+              type="text"
+              name="bankBranch"
+              // required
+              value={data.bankBranch}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+            />
+          </div>
+        </div>
+
+        {/* Note */}
+        <div>
+          <label className="block mb-1 font-medium">Note</label>
+          <input
+            type="text"
+            name="note"
+            onChange={handleChange}
+            className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+            value={data.note}
+          />
+        </div>
+
+        <hr />
+
+        {/* Submit */}
+        <div className="flex gap-4">
+          <button
+            type="submit"
+            className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
+          >
+            Submit
+          </button>
+
+          {/* <button
+            type="reset"
+            className="w-full bg-orange-600 text-white py-2 rounded hover:bg-orange-700 transition"
+          >
+            Reset
+          </button> */}
+
+          {/* <button
+            type="button"
+            className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700 transition"
+          >
+            Cancel
+          </button> */}
+        </div>
       </form>
     </div>
   );

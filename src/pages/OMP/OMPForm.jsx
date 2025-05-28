@@ -6,22 +6,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import moment from "moment";
 
-// const dummy = {
-//   policyNumber: "BGIC/DZO/MISC/OMP-1250/05/2025",
-//   issuingDate: "2025-05-19",
-//   plan: "B : Zone 2 Worldwide Excl. USA, CANADA",
-//   destinationCountries: ["Poland", "Turkey", "Saudi Arabia"],
-//   travelStartDate: "2025-07-10",
-//   travelEndDate: "2025-08-06",
-//   countryOfResidence: "Bangladesh",
-//   telephone: "+8801671558822",
-//   insuredPerson: {
-//     fullName: "AMAYRA TARANNUM",
-//     dateOfBirth: "2019-11-12",
-//     passportNumber: "A08753703",
-//   },
-// };
-
 function OMPForm() {
   const params = useParams();
   const [error, setError] = useState("");

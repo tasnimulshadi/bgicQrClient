@@ -75,19 +75,17 @@ const MyDocument = () => (
       {/* Content */}
       <View style={styles.content}>
         {/* Policy Info */}
-        <View style={{ fontSize: 11, paddingTop: 5 }}>
-          <Text style={{ textAlign: "center" }}>
+        <View style={{ fontSize: 10, paddingTop: 5 }}>
+          <Text style={{ textAlign: "center", marginBottom: 13 }}>
             Plan B : Zone 2 Worldwide Excluding USA, CANADA
           </Text>
 
           {/* POLICY NUMBER */}
           <View
             style={{
-              flex: 1,
               flexDirection: "row",
               justifyContent: "space-between",
-              paddingTop: 15,
-              paddingBottom: 5,
+              marginBottom: 5,
             }}
           >
             <Text>
@@ -101,34 +99,77 @@ const MyDocument = () => (
           </View>
 
           {/* Form */}
-          <View
-            style={{
-              paddingTop: 15,
-              flex: 1,
-              flexDirection: "row",
-              gap: 5, // Optional for spacing
-            }}
-          >
-            <View style={{ width: "20%", backgroundColor: "gray", padding: 5 }}>
-              <Text>DESTINATION</Text>
+          <View style={{ flexDirection: "column", width: "100%" }}>
+            {/* Row 1 - Header */}
+            <View style={{ flexDirection: "row", width: "100%" }}>
+              <View style={cellStyle("32%")}>
+                <Text>DESTINATION</Text>
+              </View>
+              <View style={cellStyle("11%")}>
+                <Text>FROM</Text>
+              </View>
+              <View style={cellStyle("11%")}>
+                <Text>TO</Text>
+              </View>
+              <View style={cellStyle("25%")}>
+                <Text>COUNTRY OF RESIDENCE</Text>
+              </View>
+              <View style={cellStyle("21%")}>
+                <Text>TELEPHONE NUMBER</Text>
+              </View>
             </View>
-            <View style={{ width: "15%", backgroundColor: "gray", padding: 5 }}>
-              <Text>FROM</Text>
+
+            {/* Row 2 - Data */}
+            <View style={{ flexDirection: "row", width: "100%" }}>
+              <View style={cellStyle("32%")}>
+                <Text style={{ fontWeight: "bold" }}>
+                  Poland, Turkey and Saudi Arabia
+                </Text>
+              </View>
+              <View style={cellStyle("11%")}>
+                <Text style={{ fontWeight: "bold" }}>10/07/2025</Text>
+              </View>
+              <View style={cellStyle("11%")}>
+                <Text style={{ fontWeight: "bold" }}>06/08/2025</Text>
+              </View>
+              <View style={cellStyle("25%")}>
+                <Text style={{ fontWeight: "bold" }}>Bangladesh</Text>
+              </View>
+              <View style={cellStyle("21%")}>
+                <Text style={{ fontWeight: "bold" }}>+880 1671558822</Text>
+              </View>
             </View>
-            <View
-              style={{ width: "15%", backgroundColor: "lightgray", padding: 5 }}
-            >
-              <Text>TO</Text>
+
+            {/* Row 3 - Header */}
+            <View style={{ flexDirection: "row", width: "100%" }}>
+              <View style={cellStyle("32%")}>
+                <Text>FULL NAME</Text>
+              </View>
+              <View style={cellStyle("22%")}>
+                <Text>DATE OF BIRTH </Text>
+              </View>
+              <View style={cellStyle("25%")}>
+                <Text>PASSPORT NUMBER</Text>
+              </View>
+              {/* <View style={cellStyle("21%")}>
+                <Text>PASSPORT NUMBER</Text>
+              </View> */}
             </View>
-            <View
-              style={{ width: "25%", backgroundColor: "lightgray", padding: 5 }}
-            >
-              <Text>COUNTRY OF RESIDENCE</Text>
-            </View>
-            <View
-              style={{ width: "25%", backgroundColor: "lightgray", padding: 5 }}
-            >
-              <Text>TELEPHONE NUMBER</Text>
+
+            {/* Row 4 - Data */}
+            <View style={{ flexDirection: "row", width: "100%" }}>
+              <View style={cellStyle("32%")}>
+                <Text style={{ fontWeight: "bold" }}>AMAYRA TARANNUM</Text>
+              </View>
+              <View style={cellStyle("22%")}>
+                <Text style={{ fontWeight: "bold" }}>10/07/2025</Text>
+              </View>
+              <View style={cellStyle("25%")}>
+                <Text style={{ fontWeight: "bold" }}>A08753703</Text>
+              </View>
+              {/* <View style={cellStyle("21%")}>
+                <Text style={{ fontWeight: "bold" }}>+880 1671558822</Text>
+              </View> */}
             </View>
           </View>
         </View>
@@ -172,3 +213,11 @@ export default function OMPPdf() {
     </div>
   );
 }
+
+const cellStyle = (width) => ({
+  width,
+  backgroundColor: "lightgray",
+  paddingHorizontal: 3,
+  paddingVertical: 4,
+  border: "0.5px solid white",
+});

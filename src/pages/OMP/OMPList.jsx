@@ -9,26 +9,52 @@ function OMPList() {
   const [dataList, setDataList] = useState([]);
   const [error, setError] = useState("");
   const { token } = useAuth();
+  const [filters, setFilters] = useState({
+    mobile: "",
+    ompNumber: "",
+  });
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await axios.get("http://localhost:5000/api/omp", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setDataList(res.data);
-      } catch (err) {
-        setError(err.response?.data?.error || "Failed to fetch data");
-      }
-    };
+    // const fetchData = async () => {
+    //   try {
+    //     const res = await axios.get(
+    //       "http://localhost:5000/api/omp?mobile=&ompNumber=",
+    //       {
+    //         headers: { Authorization: `Bearer ${token}` },
+    //       }
+    //     );
+    //     setDataList(res.data);
+    //   } catch (err) {
+    //     setError(err.response?.data?.error || "Failed to fetch data");
+    //   }
+    // };
 
     fetchData();
   }, [token]);
+
+  const fetchData = async () => {
+    try {
+      const query = new URLSearchParams();
+      if (filters.mobile) query.append("mobile", filters.mobile);
+      if (filters.ompNumber) query.append("ompNumber", filters.ompNumber);
+
+      const res = await axios.get(
+        `http://localhost:5000/api/omp?${query.toString()}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setDataList(res.data);
+    } catch (err) {
+      setError(err.response?.data?.error || "Failed to fetch data");
+    }
+  };
 
   return (
     <div className="flex flex-col items-center">
       <div className="flex justify-between items-start w-full max-w-6xl">
         <h1 className="text-3xl font-bold mb-6">OMP List</h1>
+
         <Link
           to={"/omp/new"}
           className="inline-block bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
@@ -39,6 +65,37 @@ function OMPList() {
           </p>
         </Link>
       </div>
+
+      <div className="mb-6 w-full max-w-6xl grid grid-cols-1 sm:grid-cols-7 gap-4">
+        <input
+          type="text"
+          name="mobile"
+          placeholder="Filter by Mobile"
+          value={filters.mobile}
+          onChange={(e) =>
+            setFilters((prev) => ({ ...prev, mobile: e.target.value }))
+          }
+          className="border px-4 py-2 rounded"
+        />
+        <input
+          type="text"
+          name="ompNumber"
+          placeholder="Filter by OMP Number"
+          value={filters.ompNumber}
+          onChange={(e) =>
+            setFilters((prev) => ({ ...prev, ompNumber: e.target.value }))
+          }
+          className="border px-4 py-2 rounded"
+        />
+        <button
+          onClick={fetchData}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        >
+          Search
+        </button>
+      </div>
+
+      <hr />
 
       {error && <p className="text-red-600 mb-4">{error}</p>}
 
