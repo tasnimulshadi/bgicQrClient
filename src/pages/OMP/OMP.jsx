@@ -11,7 +11,10 @@ import {
   FaEdit,
   FaDownload,
 } from "react-icons/fa";
-import { QRCodeSVG } from "qrcode.react";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import QRCode from "qrcode";
+import OMPPdf from "./OMPPdf";
+import headerImage from "../../assets/pdfheaderimg.jpg";
 
 export default function OMP() {
   const { id } = useParams();
@@ -20,6 +23,7 @@ export default function OMP() {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
   const [notFound, setNotFound] = useState(false);
+  const [qrImage, setQrImage] = useState(null);
 
   useEffect(() => {
     const fetchDataById = async () => {
@@ -34,8 +38,12 @@ export default function OMP() {
         }
       }
     };
-
     fetchDataById();
+
+    const pageUrl = `${window.location.origin}/omp/${id}`;
+    QRCode.toDataURL(pageUrl, { errorCorrectionLevel: "H" })
+      .then((url) => setQrImage(url))
+      .catch((err) => console.error(err));
   }, [id]);
 
   const handleEdit = () => {
@@ -57,10 +65,6 @@ export default function OMP() {
     } catch (err) {
       setError(err.response?.data?.error || "Failed to delete data");
     }
-  };
-
-  const handleDownload = () => {
-    alert("PDF is not available yet.");
   };
 
   if (notFound) return <NotFound />;
@@ -86,12 +90,13 @@ export default function OMP() {
             </button>
           </div>
         )}
-        <button
-          onClick={handleDownload}
+        <PDFDownloadLink
+          document={<OMPPdf qrImage={qrImage} data={data} />}
+          fileName={`OMP-Document-${data.policyNumber}`}
           className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-700 transition cursor-pointer shadow-2xl flex gap-2 items-center"
         >
-          Download Pdf <FaDownload />
-        </button>
+          Download PDF <FaDownload />
+        </PDFDownloadLink>
       </div>
 
       <div className="mx-auto bg-white shadow-lg rounded-lg p-6 w-full">
@@ -100,7 +105,7 @@ export default function OMP() {
         <Benefits />
         <Premium data={data} />
         <Assistance />
-        <Authoriaztion id={data._id} />
+        <Authoriaztion qrImage={qrImage} />
       </div>
     </div>
   );
@@ -110,11 +115,7 @@ export default function OMP() {
 function Header() {
   return (
     <header className="bg-red-400">
-      <img
-        alt="bgic logo"
-        src="/src/assets/headerimg.jpg"
-        className="h-full w-full"
-      />
+      <img alt="bgic logo" src={headerImage} className="h-full w-full" />
     </header>
   );
 }
@@ -162,7 +163,7 @@ function PolicyInfo({ data }) {
             {data.countryOfResidence}
           </div>
           <div className="bg-[#d3d3d3] px-1 col-span-2 font-bold">
-            +88{data.mobile}
+            +88 {data.mobile}
           </div>
           <div className="bg-[#d3d3d3] px-1 col-span-2">FULL NAME</div>
           <div className="bg-[#d3d3d3] px-1 col-span-2">DATE OF BIRTH</div>
@@ -560,17 +561,19 @@ function Assistance() {
   );
 }
 
-function Authoriaztion({ id }) {
+function Authoriaztion({ qrImage }) {
   // Construct full URL for this page for QR code
   // You might want to change the base URL for production
-  const pageUrl = `${window.location.origin}/omp/${id}`;
 
   return (
     <section className="my-6 flex justify-between items-start">
       {/* QR */}
       <div>
         <p className="font-semibold">Confirmation Code</p>
-        <QRCodeSVG value={pageUrl} size={180} className="border-2 p-3" />
+        {/* <QRCodeSVG value={pageUrl} size={180} className="border-2 p-3" /> */}
+        <div className="border-2 w-50 h-50">
+          <img src={qrImage} />
+        </div>
         <p className="text-gray-500 italic">
           For official use, scan the above code to validate this confirmation
           letter.

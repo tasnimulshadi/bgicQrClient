@@ -15,20 +15,6 @@ function OMPList() {
   });
 
   useEffect(() => {
-    // const fetchData = async () => {
-    //   try {
-    //     const res = await axios.get(
-    //       "http://localhost:5000/api/omp?mobile=&ompNumber=",
-    //       {
-    //         headers: { Authorization: `Bearer ${token}` },
-    //       }
-    //     );
-    //     setDataList(res.data);
-    //   } catch (err) {
-    //     setError(err.response?.data?.error || "Failed to fetch data");
-    //   }
-    // };
-
     fetchData();
   }, [token]);
 
