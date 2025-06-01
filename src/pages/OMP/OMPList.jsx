@@ -18,7 +18,8 @@ function OMPList() {
     fetchData();
   }, [token]);
 
-  const fetchData = async () => {
+  const fetchData = async (e) => {
+    e.preventDefault();
     try {
       const query = new URLSearchParams();
       if (filters.mobile) query.append("mobile", filters.mobile);
@@ -52,11 +53,14 @@ function OMPList() {
         </Link>
       </div>
 
-      <div className="mb-6 w-full max-w-6xl grid grid-cols-1 sm:grid-cols-7 gap-4">
+      <form
+        className="mb-6 w-full max-w-6xl grid grid-cols-1 sm:grid-cols-7 gap-4"
+        onSubmit={fetchData}
+      >
         <input
           type="text"
           name="mobile"
-          placeholder="Filter by Mobile"
+          placeholder="Search Mobile"
           value={filters.mobile}
           onChange={(e) =>
             setFilters((prev) => ({ ...prev, mobile: e.target.value }))
@@ -66,7 +70,7 @@ function OMPList() {
         <input
           type="text"
           name="ompNumber"
-          placeholder="Filter by OMP Number"
+          placeholder="Search OMP No"
           value={filters.ompNumber}
           onChange={(e) =>
             setFilters((prev) => ({ ...prev, ompNumber: e.target.value }))
@@ -74,12 +78,12 @@ function OMPList() {
           className="border px-4 py-2 rounded"
         />
         <button
-          onClick={fetchData}
+          type="submit"
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
           Search
         </button>
-      </div>
+      </form>
 
       <hr />
 

@@ -11,6 +11,7 @@ import {
 } from "@react-pdf/renderer";
 import QRCode from "qrcode";
 import headerImage from "../../assets/pdfheaderimg.jpg";
+import signatureImage from "../../assets/signature.jpg";
 import moment from "moment";
 
 // Create styles
@@ -665,6 +666,7 @@ const OMPPdf = ({ qrImage, data }) => (
               textAlign: "center",
               padding: 5,
               backgroundColor: "#059255",
+              color: "white",
             }}
           >
             <Text>Email : request@swanassistance.com</Text>
@@ -700,7 +702,7 @@ const OMPPdf = ({ qrImage, data }) => (
         {/* Signature */}
         <View style={{ flexDirection: "column", alignItems: "flex-end" }}>
           <Text style={{ fontSize: 10 }}>AUTHORIZED SIGNATORY AND STAMP</Text>
-          <Image style={{ width: 80 }} source={"src/assets/signature.jpg"} />
+          <Image style={{ width: 80 }} source={signatureImage} />
         </View>
       </View>
 
