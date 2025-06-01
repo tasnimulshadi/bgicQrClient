@@ -16,10 +16,9 @@ function OMPList() {
 
   useEffect(() => {
     fetchData();
-  }, [token]);
+  }, []);
 
-  const fetchData = async (e) => {
-    e.preventDefault();
+  const fetchData = async () => {
     try {
       const query = new URLSearchParams();
       if (filters.mobile) query.append("mobile", filters.mobile);
@@ -36,6 +35,11 @@ function OMPList() {
       setError(err.response?.data?.error || "Failed to fetch data");
     }
   };
+
+  function handleFilterSubmit(e) {
+    e.preventDefault();
+    fetchData();
+  }
 
   return (
     <div className="flex flex-col items-center">
@@ -55,7 +59,7 @@ function OMPList() {
 
       <form
         className="mb-6 w-full max-w-6xl grid grid-cols-1 sm:grid-cols-7 gap-4"
-        onSubmit={fetchData}
+        onSubmit={handleFilterSubmit}
       >
         <input
           type="text"
