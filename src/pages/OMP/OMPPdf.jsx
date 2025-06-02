@@ -277,7 +277,8 @@ const OMPPdf = ({ qrImage, data }) => (
             <View style={{ flexDirection: "row", width: "100%" }}>
               <View style={cellStyle("32%")}>
                 <Text style={{ fontWeight: "bold" }}>
-                  {formatDestinationList(data.destination)}
+                  {/* {formatDestinationList(data.destination)} */}
+                  {data.destination}
                 </Text>
               </View>
               <View style={cellStyle("11%")}>
@@ -460,7 +461,7 @@ const OMPPdf = ({ qrImage, data }) => (
             }}
           >
             Premium (including VAT) : BDT{" "}
-            {Number(data.premium) + Number(data.vat)}
+            {formaNumberToComma(Number(data.premium) + Number(data.vat))}
           </Text>
           <Text>Above sums insured are per person & per period of cover.</Text>
           <Text>
@@ -732,14 +733,21 @@ const cellStyle = (width) => ({
 });
 
 // Utility
-function formatDestinationList(destinations) {
-  const countries = destinations.map((d) => d.country).filter(Boolean);
+// function formatDestinationList(destinations) {
+//   const countries = destinations.map((d) => d.country).filter(Boolean);
 
-  if (countries.length === 0) return "";
-  if (countries.length === 1) return countries[0];
-  if (countries.length === 2) return `${countries[0]} and ${countries[1]}`;
+//   if (countries.length === 0) return "";
+//   if (countries.length === 1) return countries[0];
+//   if (countries.length === 2) return `${countries[0]} and ${countries[1]}`;
 
-  const allButLast = countries.slice(0, -1).join(", ");
-  const last = countries[countries.length - 1];
-  return `${allButLast} and ${last}`;
+//   const allButLast = countries.slice(0, -1).join(", ");
+//   const last = countries[countries.length - 1];
+//   return `${allButLast} and ${last}`;
+// }
+
+function formaNumberToComma(num) {
+  return Number(num).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }

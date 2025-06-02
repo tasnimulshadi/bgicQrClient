@@ -5,7 +5,8 @@ import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 // import NotFound from "./pages/NotFound";
 import OMPList from "./pages/OMP/OMPList";
-import OMPForm from "./pages/OMP/OMPForm";
+// import OMPForm from "./pages/OMP/OMPForm";
+import OMPForm2 from "./pages/OMP/OMPForm2";
 import OMP from "./pages/OMP/OMP";
 import OMPPdf from "./pages/OMP/OMPPdf";
 
@@ -41,7 +42,8 @@ function App() {
               path="/omp/new"
               element={
                 <PrivateRoute>
-                  <OMPForm />
+                  {/* <OMPForm /> */}
+                  <OMPForm2 />
                 </PrivateRoute>
               }
             />
@@ -50,7 +52,8 @@ function App() {
               path="/omp/edit/:id"
               element={
                 <PrivateRoute>
-                  <OMPForm />
+                  {/* <OMPForm /> */}
+                  <OMPForm2 />
                 </PrivateRoute>
               }
             />

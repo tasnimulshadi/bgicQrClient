@@ -25,7 +25,7 @@ function OMPList() {
       if (filters.ompNumber) query.append("ompNumber", filters.ompNumber);
 
       const res = await axios.get(
-        `http://localhost:5000/api/omp?${query.toString()}`,
+        `http://localhost:5000/api2/omp?${query.toString()}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -110,13 +110,15 @@ function OMPList() {
             </thead>
             <tbody>
               {dataList.map((item) => (
-                <tr key={item._id} className="hover:bg-gray-100">
+                // <tr key={item._id} className="hover:bg-gray-100">
+                <tr key={item.id} className="hover:bg-gray-100">
                   <td className="px-4 py-3 border-b border-gray-300">
                     {item.policyNumber}
                   </td>
                   <td className="px-4 py-3 border-b border-gray-300 text-right">
                     <Link
-                      to={`/omp/${item._id}`}
+                      // to={`/omp/${item._id}`}
+                      to={`/omp/${item.id}`}
                       className="text-blue-600 hover:underline font-semibold"
                     >
                       View OMP

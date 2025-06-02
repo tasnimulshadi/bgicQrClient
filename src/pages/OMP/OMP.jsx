@@ -28,7 +28,7 @@ export default function OMP() {
   useEffect(() => {
     const fetchDataById = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/omp/${id}`);
+        const res = await axios.get(`http://localhost:5000/api2/omp/${id}`);
         setData(res.data);
       } catch (err) {
         if (err.response?.status === 404) {
@@ -58,7 +58,7 @@ export default function OMP() {
     if (!confirmed) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/omp/${id}`, {
+      await axios.delete(`http://localhost:5000/api2/omp/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       navigate("/omp"); // Redirect to data list after delete
@@ -151,7 +151,8 @@ function PolicyInfo({ data }) {
           </div>
           <div className="bg-[#d3d3d3] px-1 col-span-2">TELEPHONE NUMBER</div>
           <div className="bg-[#d3d3d3] px-1 col-span-2 font-bold">
-            {formatDestinationList(data.destination)}
+            {/* {formatDestinationList(data.destination)} */}
+            {data.destination}
           </div>
           <div className="bg-[#d3d3d3] px-1 font-bold">
             {moment(data.travelDateFrom).format("DD/MM/YYYY")}
@@ -418,7 +419,8 @@ function Premium({ data }) {
     <section>
       {/* Premium */}
       <h2 className="text-lg font-bold my-2">
-        Premium (including VAT) : BDT {Number(data.premium) + Number(data.vat)}
+        Premium (including VAT) : BDT{" "}
+        {formaNumberToComma(Number(data.premium) + Number(data.vat))}
       </h2>
       <div className="text-sm font-bold">
         Above sums insured are per person & per period of cover.
@@ -572,7 +574,7 @@ function Authoriaztion({ qrImage }) {
         <p className="font-semibold">Confirmation Code</p>
         {/* <QRCodeSVG value={pageUrl} size={180} className="border-2 p-3" /> */}
         <div className="border-2 w-50 h-50">
-          <img src={qrImage} />
+          <img src={qrImage} className="w-full h-full" />
         </div>
         <p className="text-gray-500 italic">
           For official use, scan the above code to validate this confirmation
@@ -590,14 +592,21 @@ function Authoriaztion({ qrImage }) {
 }
 
 // Utility
-function formatDestinationList(destinations) {
-  const countries = destinations.map((d) => d.country).filter(Boolean);
+// function formatDestinationList(destinations) {
+//   const countries = destinations.map((d) => d.country).filter(Boolean);
 
-  if (countries.length === 0) return "";
-  if (countries.length === 1) return countries[0];
-  if (countries.length === 2) return `${countries[0]} and ${countries[1]}`;
+//   if (countries.length === 0) return "";
+//   if (countries.length === 1) return countries[0];
+//   if (countries.length === 2) return `${countries[0]} and ${countries[1]}`;
 
-  const allButLast = countries.slice(0, -1).join(", ");
-  const last = countries[countries.length - 1];
-  return `${allButLast} and ${last}`;
+//   const allButLast = countries.slice(0, -1).join(", ");
+//   const last = countries[countries.length - 1];
+//   return `${allButLast} and ${last}`;
+// }
+
+function formaNumberToComma(num) {
+  return Number(num).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
