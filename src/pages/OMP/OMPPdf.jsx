@@ -1,15 +1,11 @@
-// import React, { useEffect, useState } from "react";
 import {
   Page,
   Text,
   View,
   Document,
   StyleSheet,
-  PDFDownloadLink,
-  PDFViewer,
   Image,
 } from "@react-pdf/renderer";
-import QRCode from "qrcode";
 import headerImage from "../../assets/pdfheaderimg.jpg";
 import signatureImage from "../../assets/signature.jpg";
 import moment from "moment";

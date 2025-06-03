@@ -209,9 +209,11 @@ export default function OMPForm() {
     const endDate = moment(data.travelDateFrom)
       .add(value, "days")
       .format("YYYY-MM-DD");
+      console.log(value);
+      
 
     // Only allow digits (positive integers)
-    if (/^\d*$/.test(value)) {
+    if (value>0) {
       setData({
         ...data,
         travelDays: value,

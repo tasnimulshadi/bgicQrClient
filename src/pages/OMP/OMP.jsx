@@ -10,8 +10,9 @@ import {
   FaTrashAlt,
   FaEdit,
   FaDownload,
+  FaPrint
 } from "react-icons/fa";
-import { PDFDownloadLink } from "@react-pdf/renderer";
+import { pdf, PDFDownloadLink } from "@react-pdf/renderer";
 import QRCode from "qrcode";
 import OMPPdf from "./OMPPdf";
 import headerImage from "../../assets/pdfheaderimg.jpg";
@@ -24,6 +25,28 @@ export default function OMP() {
   const [error, setError] = useState("");
   const [notFound, setNotFound] = useState(false);
   const [qrImage, setQrImage] = useState(null);
+  const [blobUrl, setBlobUrl] = useState(null);
+
+  const generatePdfBlob = async () => {
+    const blob = await pdf(<OMPPdf qrImage={qrImage} data={data} />).toBlob();
+    const url = URL.createObjectURL(blob);
+    setBlobUrl(url);
+    return url;
+  };
+
+  const handlePrint = async () => {
+    const url = await generatePdfBlob();
+
+    const iframe = document.createElement("iframe");
+    iframe.style.display = "none";
+    iframe.src = url;
+    document.body.appendChild(iframe);
+
+    iframe.onload = () => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+    };
+  };
 
   useEffect(() => {
     const fetchDataById = async () => {
@@ -90,13 +113,21 @@ export default function OMP() {
             </button>
           </div>
         )}
-        <PDFDownloadLink
-          document={<OMPPdf qrImage={qrImage} data={data} />}
-          fileName={`OMP-Document-${data.policyNumber}`}
-          className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-700 transition cursor-pointer shadow-2xl flex gap-2 items-center"
-        >
-          Download PDF <FaDownload />
-        </PDFDownloadLink>
+        <div className="flex gap-3">
+          <PDFDownloadLink
+            document={<OMPPdf qrImage={qrImage} data={data} />}
+            fileName={`OMP-Document-${data.policyNumber}`}
+            className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-700 transition cursor-pointer shadow-2xl flex gap-2 items-center"
+          >
+            Download <FaDownload />
+          </PDFDownloadLink>
+          <button
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 transition cursor-pointer shadow-2xl flex gap-2 items-center"
+            onClick={handlePrint}
+          >
+            Print <FaPrint />
+          </button>
+        </div>
       </div>
 
       <div className="mx-auto bg-white shadow-lg rounded-lg p-6 w-full">
