@@ -25,12 +25,10 @@ export default function OMP() {
   const [error, setError] = useState("");
   const [notFound, setNotFound] = useState(false);
   const [qrImage, setQrImage] = useState(null);
-  const [blobUrl, setBlobUrl] = useState(null);
 
   const generatePdfBlob = async () => {
     const blob = await pdf(<OMPPdf qrImage={qrImage} data={data} />).toBlob();
     const url = URL.createObjectURL(blob);
-    setBlobUrl(url);
     return url;
   };
 

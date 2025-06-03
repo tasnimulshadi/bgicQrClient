@@ -9,6 +9,7 @@ import OMPList from "./pages/OMP/OMPList";
 import OMPForm2 from "./pages/OMP/OMPForm2";
 import OMP from "./pages/OMP/OMP";
 import OMPPdf from "./pages/OMP/OMPPdf";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
@@ -61,8 +62,7 @@ function App() {
             {/* this one stays public */}
             {/* OMP */}
             <Route path="/omp/:id" element={<OMP />} />
-            {/* <Route path="*" element={<NotFound />} /> */}
-            <Route path="*" element={<OMPPdf />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
       </Router>
