@@ -1,4 +1,4 @@
-// src/pages/DataForm.jsx
+// src/pages/OMPForm.jsx
 import axios from "axios";
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -25,13 +25,7 @@ export default function OMPForm() {
     mobile: "",
     email: "",
     passport: "",
-    destination: [
-      // {
-      //   id: 1748340096882,
-      //   country: "India",
-      //   remarks: "",
-      // },
-    ],
+    destination: "",
     travelDateFrom: moment(new Date()).format("YYYY-MM-DD"),
     travelDays: "",
     travelDateTo: "",
@@ -104,7 +98,12 @@ export default function OMPForm() {
         const res = await axios.get(
           `http://localhost:5000/api2/omp/${params.id}`
         );
-        setData(res.data);
+
+        const transformedData = {
+          ...res.data,
+          issueDate: moment(res.data.issueDate).format("YYYY-MM-DD"),
+        };
+        setData((prev) => ({ ...prev, ...transformedData }));
       } catch (err) {
         setError(err.response?.data?.error || "Failed to load data");
       }
@@ -123,11 +122,11 @@ export default function OMPForm() {
     try {
       if (params.id) {
         // Edit
-        await axios.patch(`http://localhost:5000/api2/omp/${data._id}`, data, {
+        await axios.patch(`http://localhost:5000/api2/omp/${data.id}`, data, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        navigate(`/omp/${data._id}`, { replace: true });
+        navigate(`/omp/${data.id}`, { replace: true });
       } else {
         // Create
         await axios.post("http://localhost:5000/api2/omp", data, {
@@ -139,33 +138,6 @@ export default function OMPForm() {
     } catch (err) {
       setError(err.response?.data?.error || "Failed to submit data");
     }
-  };
-
-  // Destination
-  // Edit
-  const handleDestinationChange = (index, field, value) => {
-    const updated = [...data.destination];
-    updated[index][field] = value;
-    setData({ ...data, destination: updated });
-  };
-
-  // Destination
-  // Add
-  const handleDestinationAddMore = () => {
-    setData({
-      ...data,
-      destination: [
-        ...data.destination,
-        { id: Date.now(), country: "", remarks: "" },
-      ],
-    });
-  };
-
-  // Destination
-  // Delete
-  const handleDestinationDelete = (id) => {
-    const filtered = data.destination.filter((item) => item.id !== id);
-    setData({ ...data, destination: filtered });
   };
 
   // OMP No.
@@ -209,11 +181,9 @@ export default function OMPForm() {
     const endDate = moment(data.travelDateFrom)
       .add(value, "days")
       .format("YYYY-MM-DD");
-      console.log(value);
-      
 
     // Only allow digits (positive integers)
-    if (value>0) {
+    if (/^\d*$/.test(value)) {
       setData({
         ...data,
         travelDays: value,
@@ -254,6 +224,7 @@ export default function OMPForm() {
   // Cheque No.
   // Cheque Date
   // MOP
+  // Destination
   function handleChange(e) {
     const name = e.target.name;
     const value = e.target.value;
@@ -329,7 +300,11 @@ export default function OMPForm() {
             <input
               type="date"
               name="issueDate"
-              value={data.issueDate}
+              value={
+                data.issueDate
+                  ? moment(data.issueDate).format("YYYY-MM-DD")
+                  : ""
+              }
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
@@ -375,7 +350,7 @@ export default function OMPForm() {
             <input
               type="date"
               name="dob"
-              value={data.dob}
+              value={data.dob ? moment(data.dob).format("YYYY-MM-DD") : ""}
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
@@ -463,75 +438,19 @@ export default function OMPForm() {
 
         <hr />
 
-        {/* Destination*/}
-        <div className="space-y-4">
-          {data.destination.map((item, index) => (
-            <div key={item.id} className="grid sm:grid-cols-7 gap-4 items-end">
-              {/* Country Select */}
-              <div className="sm:col-span-3">
-                <label className="block mb-1 font-medium">Destination</label>
-                <select
-                  className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
-                  value={item.country}
-                  required
-                  onChange={(e) =>
-                    handleDestinationChange(index, "country", e.target.value)
-                  }
-                >
-                  <option value="">Select a destination</option>
-                  {dropdownData.countriesList.map((country) => (
-                    <option key={country.id} value={country.value}>
-                      {country.value}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Remarks Input */}
-              <div className="sm:col-span-3">
-                <label className="block mb-1 font-medium">Remarks</label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2 border rounded  shadow-xl bg-gray-100"
-                  value={item.remarks}
-                  onChange={(e) =>
-                    handleDestinationChange(index, "remarks", e.target.value)
-                  }
-                />
-              </div>
-
-              {/* Delete Button */}
-              <button
-                type="button"
-                onClick={() => handleDestinationDelete(item.id)}
-                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 shadow-xl border-1 border-red-600"
-              >
-                Delete
-              </button>
-            </div>
-          ))}
-        </div>
-
         {/* Destination Read Only*/}
-        <div className="grid sm:grid-cols-6 gap-4 items-end">
-          <div className="sm:col-span-5">
+        <div className="grid sm:grid-cols-1 gap-4 items-end">
+          <div className="">
             <label className="block mb-1 font-medium">Destination</label>
             <input
               type="text"
-              readOnly
-              className="w-full px-4 py-2 border rounded shadow-xl bg-gray-200"
-              value={formatDestinationList(data.destination)}
+              required
+              className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+              value={data.destination}
+              onChange={handleChange}
+              name="destination"
             />
           </div>
-
-          {/* Add More Destination Button */}
-          <button
-            type="button"
-            onClick={handleDestinationAddMore}
-            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 shadow-xl border-2 border-blue-600"
-          >
-            {data.destination.length > 0 ? "Add More" : "Add Destination"}
-          </button>
         </div>
 
         {/* Tavel Days */}
@@ -557,7 +476,11 @@ export default function OMPForm() {
             <input
               type="date"
               name="travelDateFrom"
-              value={data.travelDateFrom}
+              value={
+                data.travelDateFrom
+                  ? moment(data.travelDateFrom).format("YYYY-MM-DD")
+                  : ""
+              }
               onChange={handleChange_travelDateFrom}
               required
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
@@ -569,7 +492,11 @@ export default function OMPForm() {
             <label className="block mb-1 font-medium">To</label>
             <input
               type="date"
-              value={data.travelDateTo}
+              value={
+                data.travelDateTo
+                  ? moment(data.travelDateTo).format("YYYY-MM-DD")
+                  : ""
+              }
               readOnly
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-200"
             />
@@ -675,7 +602,9 @@ export default function OMPForm() {
             <input
               type="date"
               name="mrDate"
-              value={data.mrDate}
+              value={
+                data.mrDate ? moment(data.mrDate).format("YYYY-MM-DD") : ""
+              }
               onChange={handleChange}
               // required
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
@@ -724,7 +653,11 @@ export default function OMPForm() {
             <input
               type="date"
               name="chequeDate"
-              value={data.chequeDate}
+              value={
+                data.chequeDate
+                  ? moment(data.chequeDate).format("YYYY-MM-DD")
+                  : ""
+              }
               onChange={handleChange}
               // required
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
@@ -778,37 +711,10 @@ export default function OMPForm() {
             type="submit"
             className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
           >
-            Submit
+            {params.id ? "Update" : "Submit"}
           </button>
-
-          {/* <button
-            type="reset"
-            className="w-full bg-orange-600 text-white py-2 rounded hover:bg-orange-700 transition"
-          >
-            Reset
-          </button> */}
-
-          {/* <button
-            type="button"
-            className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700 transition"
-          >
-            Cancel
-          </button> */}
         </div>
       </form>
     </div>
   );
-}
-
-// Utility
-function formatDestinationList(destinations) {
-  const countries = destinations.map((d) => d.country).filter(Boolean);
-
-  if (countries.length === 0) return "";
-  if (countries.length === 1) return countries[0];
-  if (countries.length === 2) return `${countries[0]} and ${countries[1]}`;
-
-  const allButLast = countries.slice(0, -1).join(", ");
-  const last = countries[countries.length - 1];
-  return `${allButLast} and ${last}`;
 }

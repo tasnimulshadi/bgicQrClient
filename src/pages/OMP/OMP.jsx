@@ -10,12 +10,13 @@ import {
   FaTrashAlt,
   FaEdit,
   FaDownload,
-  FaPrint
+  FaPrint,
 } from "react-icons/fa";
 import { pdf, PDFDownloadLink } from "@react-pdf/renderer";
 import QRCode from "qrcode";
 import OMPPdf from "./OMPPdf";
 import headerImage from "../../assets/pdfheaderimg.jpg";
+import { formaNumberToComma } from "../../utility/utilityFunctions";
 
 export default function OMP() {
   const { id } = useParams();
@@ -134,7 +135,7 @@ export default function OMP() {
         <Benefits />
         <Premium data={data} />
         <Assistance />
-        <Authoriaztion qrImage={qrImage} />
+        <Authorization qrImage={qrImage} />
       </div>
     </div>
   );
@@ -397,9 +398,9 @@ function Benefits() {
         )}
       </button>
       {showBenefits && (
-        <table className="w-full">
+        <table className="w-full" aria-expanded={showBenefits}>
           <thead className="bg-[#d3d3d3] w-full text-left">
-            <tr className="border-1 border-[#929292]">
+            <tr className="border-[1px] border-[#929292]">
               <th colSpan={3} className="px-1 w-4/8">
                 BENEFITS
               </th>
@@ -416,7 +417,7 @@ function Benefits() {
               <tr
                 className={`${
                   index % 2 == 0 ? "bg-white" : "bg-[#d3d3d3]"
-                } py-2 border-1 border-[#929292]`}
+                } py-2 border-[1px] border-[#929292]`}
                 key={index}
               >
                 <td
@@ -500,7 +501,7 @@ function Assistance() {
       </div>
 
       {showAssistance && (
-        <div className="text-sm font-semibold">
+        <div className="text-sm font-semibold" aria-expanded={showAssistance}>
           <p>
             The Reinsured/Cedant will insert "clear indications" in the issued
             policies advising the "Insured" to contact The Assistance Company
@@ -533,46 +534,48 @@ function Assistance() {
           </p>
 
           {/* Contact Table */}
-          <table className="my-4 w-full text-center border-1 border-gray-500 text-xl">
+          <table className="my-4 w-full text-center border-[1px] border-gray-500 text-xl">
             <tbody>
               <tr className="bg-[#c0e3a9]">
-                <td className="border-1 border-gray-500 py-1" colSpan={2}>
+                <td className="border-[1px] border-gray-500 py-1" colSpan={2}>
                   Available 24 Hrs. / 7 days
                 </td>
               </tr>
               <tr>
-                <td className="border-1 w-1/2 border-gray-500 py-1">Country</td>
-                <td className="border-1 w-1/2 border-gray-500">
+                <td className="border-[1px] w-1/2 border-gray-500 py-1">
+                  Country
+                </td>
+                <td className="border-[1px] w-1/2 border-gray-500">
                   Contact Numbers
                 </td>
               </tr>
               <tr>
-                <td className="border-1 w-1/2 border-gray-500 py-1">
+                <td className="border-[1px] w-1/2 border-gray-500 py-1">
                   USA / Canada
                 </td>
-                <td className="border-1 w-1/2 border-gray-500">
+                <td className="border-[1px] w-1/2 border-gray-500">
                   +1 514 448 4417
                 </td>
               </tr>
               <tr>
-                <td className="border-1 w-1/2 border-gray-500 py-1">
+                <td className="border-[1px] w-1/2 border-gray-500 py-1">
                   France / Europe
                 </td>
-                <td className="border-1 w-1/2 border-gray-500">
+                <td className="border-[1px] w-1/2 border-gray-500">
                   +33 9 75 18 52 99
                 </td>
               </tr>
               <tr>
-                <td className="border-1 w-1/2 border-gray-500 py-1">
+                <td className="border-[1px] w-1/2 border-gray-500 py-1">
                   International
                 </td>
-                <td className="border-1 w-1/2 border-gray-500">
+                <td className="border-[1px] w-1/2 border-gray-500">
                   +961 9 211 662
                 </td>
               </tr>
               <tr className="bg-[#059255]">
                 <td
-                  className="border-1 w-1/2 border-gray-500 py-1 text-white"
+                  className="border-[1px] w-1/2 border-gray-500 py-1 text-white"
                   colSpan={2}
                 >
                   Email : request@swanassistance.com
@@ -592,7 +595,7 @@ function Assistance() {
   );
 }
 
-function Authoriaztion({ qrImage }) {
+function Authorization({ qrImage }) {
   // Construct full URL for this page for QR code
   // You might want to change the base URL for production
 
@@ -601,7 +604,6 @@ function Authoriaztion({ qrImage }) {
       {/* QR */}
       <div>
         <p className="font-semibold">Confirmation Code</p>
-        {/* <QRCodeSVG value={pageUrl} size={180} className="border-2 p-3" /> */}
         <div className="border-2 w-50 h-50">
           <img src={qrImage} className="w-full h-full" />
         </div>
@@ -618,24 +620,4 @@ function Authoriaztion({ qrImage }) {
       </div>
     </section>
   );
-}
-
-// Utility
-// function formatDestinationList(destinations) {
-//   const countries = destinations.map((d) => d.country).filter(Boolean);
-
-//   if (countries.length === 0) return "";
-//   if (countries.length === 1) return countries[0];
-//   if (countries.length === 2) return `${countries[0]} and ${countries[1]}`;
-
-//   const allButLast = countries.slice(0, -1).join(", ");
-//   const last = countries[countries.length - 1];
-//   return `${allButLast} and ${last}`;
-// }
-
-function formaNumberToComma(num) {
-  return Number(num).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
 }

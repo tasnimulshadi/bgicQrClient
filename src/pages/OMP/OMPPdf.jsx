@@ -9,6 +9,7 @@ import {
 import headerImage from "../../assets/pdfheaderimg.jpg";
 import signatureImage from "../../assets/signature.jpg";
 import moment from "moment";
+import { formaNumberToComma } from "../../utility/utilityFunctions";
 
 // Create styles
 const styles = StyleSheet.create({
@@ -373,9 +374,9 @@ const OMPPdf = ({ qrImage, data }) => (
         <View
           style={{
             marginTop: 5,
-            border: "1",
+            borderWidth: 1,
             borderColor: "gray",
-            borderTop: "none",
+            borderTopWidth: 0,
           }}
         >
           <View
@@ -531,7 +532,7 @@ const OMPPdf = ({ qrImage, data }) => (
         <View
           style={{
             marginVertical: 10,
-            border: "1",
+            borderWidth: 1,
             borderColor: "gray",
             fontSize: 12,
           }}
@@ -688,8 +689,8 @@ const OMPPdf = ({ qrImage, data }) => (
         {/* QR */}
         <View>
           <Text style={{ fontSize: 10 }}>Confirmation Code</Text>
-          <View style={{ width: 80, height: 80, border: "1" }}>
-            <Image src={qrImage} />
+          <View style={{ width: 80, height: 80, borderWidth: 1 }}>
+            <Image source={{ uri: qrImage }} />
           </View>
           <Text style={{ fontSize: 10, color: "gray", fontStyle: "italic" }}>
             For official use, scan the above code to validate this confirmation
@@ -727,23 +728,3 @@ const cellStyle = (width) => ({
   paddingVertical: 4,
   border: "0.5px solid white",
 });
-
-// Utility
-// function formatDestinationList(destinations) {
-//   const countries = destinations.map((d) => d.country).filter(Boolean);
-
-//   if (countries.length === 0) return "";
-//   if (countries.length === 1) return countries[0];
-//   if (countries.length === 2) return `${countries[0]} and ${countries[1]}`;
-
-//   const allButLast = countries.slice(0, -1).join(", ");
-//   const last = countries[countries.length - 1];
-//   return `${allButLast} and ${last}`;
-// }
-
-function formaNumberToComma(num) {
-  return Number(num).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}

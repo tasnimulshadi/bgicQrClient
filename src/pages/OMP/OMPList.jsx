@@ -6,9 +6,10 @@ import { useAuth } from "../../context/AuthContext";
 import { FaPlus } from "react-icons/fa";
 
 function OMPList() {
+  const { token } = useAuth();
   const [dataList, setDataList] = useState([]);
   const [error, setError] = useState("");
-  const { token } = useAuth();
+  const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({
     mobile: "",
     ompNumber: "",
@@ -19,6 +20,7 @@ function OMPList() {
   }, []);
 
   const fetchData = async () => {
+    setLoading(true);
     try {
       const query = new URLSearchParams();
       if (filters.mobile) query.append("mobile", filters.mobile);
@@ -33,6 +35,9 @@ function OMPList() {
       setDataList(res.data);
     } catch (err) {
       setError(err.response?.data?.error || "Failed to fetch data");
+      console.error("Fetch error:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -93,7 +98,9 @@ function OMPList() {
 
       {error && <p className="text-red-600 mb-4">{error}</p>}
 
-      {dataList.length === 0 ? (
+      {loading ? (
+        <p className="text-gray-600">Loading...</p>
+      ) : dataList.length === 0 ? (
         <p className="text-gray-600">No OMP Found.</p>
       ) : (
         <div className="w-full max-w-6xl overflow-x-auto">
@@ -110,14 +117,12 @@ function OMPList() {
             </thead>
             <tbody>
               {dataList.map((item) => (
-                // <tr key={item._id} className="hover:bg-gray-100">
                 <tr key={item.id} className="hover:bg-gray-100">
                   <td className="px-4 py-3 border-b border-gray-300">
                     {item.policyNumber}
                   </td>
                   <td className="px-4 py-3 border-b border-gray-300 text-right">
                     <Link
-                      // to={`/omp/${item._id}`}
                       to={`/omp/${item.id}`}
                       className="text-blue-600 hover:underline font-semibold"
                     >

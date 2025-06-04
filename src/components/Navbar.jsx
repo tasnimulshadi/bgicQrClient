@@ -27,15 +27,10 @@ function Navbar() {
             >
               BGIC
             </Link>
-            {/* <Link to="/data" className="text-blue-600 hover:underline">
-              Data List
-            </Link>
-            <Link to="/data/new" className="text-blue-600 hover:underline">
-              Add Data
-            </Link> */}
           </div>
           <div>
             <button
+              aria-label="Logout"
               onClick={handleLogout}
               className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 cursor-pointer"
             >

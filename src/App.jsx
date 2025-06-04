@@ -3,12 +3,9 @@ import Navbar from "./components/Navbar";
 import PrivateRoute from "./context/PrivateRoute";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
-// import NotFound from "./pages/NotFound";
 import OMPList from "./pages/OMP/OMPList";
-// import OMPForm from "./pages/OMP/OMPForm";
-import OMPForm2 from "./pages/OMP/OMPForm2";
+import OMPForm from "./pages/OMP/OMPForm";
 import OMP from "./pages/OMP/OMP";
-import OMPPdf from "./pages/OMP/OMPPdf";
 import NotFound from "./pages/NotFound";
 
 function App() {
@@ -43,8 +40,7 @@ function App() {
               path="/omp/new"
               element={
                 <PrivateRoute>
-                  {/* <OMPForm /> */}
-                  <OMPForm2 />
+                  <OMPForm />
                 </PrivateRoute>
               }
             />
@@ -54,7 +50,7 @@ function App() {
               element={
                 <PrivateRoute>
                   {/* <OMPForm /> */}
-                  <OMPForm2 />
+                  <OMPForm />
                 </PrivateRoute>
               }
             />

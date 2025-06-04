@@ -18,7 +18,7 @@ function Dashboard() {
     <div className="flex flex-col items-center w-full">
       <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
 
-      <div className="w-full">
+      <div className="w-full overflow-x-auto">
         <table className="min-w-full border border-gray-300 rounded-lg overflow-hidden">
           <thead className="bg-gray-300">
             <tr>
