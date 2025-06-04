@@ -27,7 +27,7 @@ function OMPList() {
       if (filters.ompNumber) query.append("ompNumber", filters.ompNumber);
 
       const res = await axios.get(
-        `http://localhost:5000/api2/omp?${query.toString()}`,
+        `http://localhost:5000/api/v1/omp?${query.toString()}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

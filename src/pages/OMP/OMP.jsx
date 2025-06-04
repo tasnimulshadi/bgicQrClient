@@ -50,7 +50,7 @@ export default function OMP() {
   useEffect(() => {
     const fetchDataById = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api2/omp/${id}`);
+        const res = await axios.get(`http://localhost:5000/api/v1/omp/${id}`);
         setData(res.data);
       } catch (err) {
         if (err.response?.status === 404) {
@@ -80,7 +80,7 @@ export default function OMP() {
     if (!confirmed) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api2/omp/${id}`, {
+      await axios.delete(`http://localhost:5000/api/v1/omp/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       navigate("/omp"); // Redirect to data list after delete

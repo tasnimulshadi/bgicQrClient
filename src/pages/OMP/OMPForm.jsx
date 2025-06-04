@@ -44,7 +44,6 @@ export default function OMPForm() {
     bankBranch: "",
     note: "",
   });
-  // console.log(data);
 
   const dropdownData = {
     typeOfTRV: [
@@ -96,7 +95,7 @@ export default function OMPForm() {
     const fetchDataById = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:5000/api2/omp/${params.id}`
+          `http://localhost:5000/api/v1/omp/${params.id}`
         );
 
         const transformedData = {
@@ -122,14 +121,14 @@ export default function OMPForm() {
     try {
       if (params.id) {
         // Edit
-        await axios.patch(`http://localhost:5000/api2/omp/${data.id}`, data, {
+        await axios.patch(`http://localhost:5000/api/v1/omp/${data.id}`, data, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         navigate(`/omp/${data.id}`, { replace: true });
       } else {
         // Create
-        await axios.post("http://localhost:5000/api2/omp", data, {
+        await axios.post("http://localhost:5000/api/v1/omp", data, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -512,7 +511,6 @@ export default function OMPForm() {
               type="number"
               name="limitOfCover"
               required
-              inputMode="numeric"
               value={data.limitOfCover}
               onChange={handleChange}
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
