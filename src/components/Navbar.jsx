@@ -7,13 +7,13 @@ function Navbar() {
   const location = useLocation();
 
   // Hide Navbar on login page or if not authenticated
-  if (location.pathname === "/" || !isAuthenticated) {
+  if (location.pathname === "/bgichologin" || !isAuthenticated) {
     return null;
   }
 
   const handleLogout = () => {
     logout();
-    navigate("/");
+    navigate("/bgichologin");
   };
 
   return (
@@ -32,7 +32,7 @@ function Navbar() {
             <button
               aria-label="Logout"
               onClick={handleLogout}
-              className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 cursor-pointer"
+              className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 cursor-pointer flex justify-center items-center gap-1 font-semibold"
             >
               Logout
             </button>

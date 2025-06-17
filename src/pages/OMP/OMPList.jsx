@@ -3,9 +3,16 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { FaPlus } from "react-icons/fa";
+import {
+  FaPlus,
+  FaSearch,
+  FaChevronLeft,
+  FaChevronRight,
+} from "react-icons/fa";
 import config from "../../utility/config";
 import { toast } from "react-toastify";
+import { formaNumberToComma } from "../../utility/utilityFunctions";
+import Loading from "../../components/Loading";
 
 function OMPList() {
   const { token } = useAuth();
@@ -79,7 +86,7 @@ function OMPList() {
           to={"/omp/new"}
           className="inline-block bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
         >
-          <p className="flex justify-center items-center gap-2">
+          <p className="flex justify-center items-center gap-2 font-semibold">
             <FaPlus size={20} />
             Add New OMP
           </p>
@@ -92,16 +99,6 @@ function OMPList() {
       >
         <input
           type="text"
-          name="mobile"
-          placeholder="Search Mobile"
-          value={filters.mobile}
-          onChange={(e) =>
-            setFilters((prev) => ({ ...prev, mobile: e.target.value }))
-          }
-          className="border px-4 py-2 rounded"
-        />
-        <input
-          type="text"
           name="ompNumber"
           placeholder="Search OMP No"
           value={filters.ompNumber}
@@ -110,11 +107,21 @@ function OMPList() {
           }
           className="border px-4 py-2 rounded"
         />
+        <input
+          type="text"
+          name="mobile"
+          placeholder="Search Mobile"
+          value={filters.mobile}
+          onChange={(e) =>
+            setFilters((prev) => ({ ...prev, mobile: e.target.value }))
+          }
+          className="border px-4 py-2 rounded"
+        />
         <button
           type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center justify-center gap-2 cursor-pointer font-semibold"
         >
-          Search
+          <FaSearch /> Search
         </button>
       </form>
 
@@ -123,17 +130,29 @@ function OMPList() {
       {/* {error && <p className="text-red-600 mb-4">{error}</p>} */}
 
       {loading ? (
-        <p className="text-gray-600">Loading...</p>
+        <Loading />
       ) : dataList.length === 0 ? (
         <p className="text-gray-600">No OMP Found.</p>
       ) : (
         <>
           <div className="w-full max-w-6xl overflow-x-auto">
             <table className="min-w-full border border-gray-300 rounded-lg">
-              <thead className="bg-gray-200">
+              <thead className="bg-gray-600 text-white">
                 <tr>
                   <th className="text-left px-4 py-3 border-b border-gray-300">
-                    Policy Number
+                    ID
+                  </th>
+                  <th className="text-left px-4 py-3 border-b border-gray-300">
+                    OMP No.
+                  </th>
+                  <th className="text-left px-4 py-3 border-b border-gray-300">
+                    Policy No.
+                  </th>
+                  <th className="text-left px-4 py-3 border-b border-gray-300">
+                    Mobile No.
+                  </th>
+                  <th className="text-left px-4 py-3 border-b border-gray-300">
+                    Premium
                   </th>
                   <th className="text-right px-4 py-3 border-b border-gray-300">
                     Action
@@ -141,10 +160,30 @@ function OMPList() {
                 </tr>
               </thead>
               <tbody>
-                {dataList.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-100">
+                {dataList.map((item, index) => (
+                  <tr
+                    key={item.id}
+                    className={`hover:bg-gray-300 ${
+                      index % 2 == 0 ? "bg-gray-100" : "bg-gray-50"
+                    }`}
+                  >
+                    <td className="px-4 py-3 border-b border-gray-300">
+                      {item.id}
+                    </td>
+                    <td className="px-4 py-3 border-b border-gray-300">
+                      {item.ompNumber}
+                    </td>
                     <td className="px-4 py-3 border-b border-gray-300">
                       {item.policyNumber}
+                    </td>
+                    <td className="px-4 py-3 border-b border-gray-300">
+                      {item.mobile}
+                    </td>
+                    <td className="px-4 py-3 border-b border-gray-300">
+                      BDT{" "}
+                      {formaNumberToComma(
+                        Number(item.premium) + Number(item.vat)
+                      )}
                     </td>
                     <td className="px-4 py-3 border-b border-gray-300 text-right">
                       <Link
@@ -164,9 +203,9 @@ function OMPList() {
             <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className="px-4 py-2 border rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+              className="px-4 py-2 border rounded bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-30 cursor-pointer flex justify-center items-center gap-1"
             >
-              Prev
+              <FaChevronLeft /> Prev
             </button>
 
             <span className="px-4 py-2 font-medium text-gray-700 border rounded">
@@ -176,9 +215,9 @@ function OMPList() {
             <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === Math.ceil(totalItems / itemsPerPage)}
-              className="px-4 py-2 border rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+              className="px-4 py-2 border rounded bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-30 cursor-pointer flex justify-center items-center gap-1"
             >
-              Next
+              Next <FaChevronRight />
             </button>
           </div>
           {/* Pagination End */}

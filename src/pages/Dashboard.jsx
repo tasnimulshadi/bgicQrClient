@@ -37,7 +37,7 @@ function Dashboard() {
             {data.map((item) => (
               <tr className="bg-gray-100 hover:bg-gray-200" key={item.id}>
                 {/* Name */}
-                <td className="px-4 py-3 border-b border-gray-300">
+                <td className="px-4 py-3 border-b border-gray-300 font-bold">
                   {item.name}
                 </td>
 
@@ -47,7 +47,7 @@ function Dashboard() {
                     to={`/${item.route}`}
                     className="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
                   >
-                    <p className="flex justify-center items-center gap-2">
+                    <p className="flex justify-center items-center gap-2 font-semibold">
                       <FaListAlt size={20} />
                       {item.name} List
                     </p>
@@ -60,7 +60,7 @@ function Dashboard() {
                     to={`/${item.route}/new`}
                     className="inline-block bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
                   >
-                    <p className="flex justify-center items-center gap-2">
+                    <p className="flex justify-center items-center gap-2 font-semibold">
                       <FaPlus size={20} />
                       Add {item.name}
                     </p>

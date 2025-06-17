@@ -30,10 +30,14 @@ function Login() {
       login(res.data.token);
       window.location.href = "/dashboard";
     } catch (err) {
+      console.log(err);
+
       toast.error(
         <div>
           <p className="font-bold">Login Failed.</p>
-          <p>{err.message}</p>
+          <p>
+            {err.response.data.error ? err.response.data.error : err.message}
+          </p>
         </div>
       );
     }

@@ -20,6 +20,7 @@ import signatureImage from "../../assets/signature.jpg";
 import { formaNumberToComma } from "../../utility/utilityFunctions";
 import config from "../../utility/config";
 import { toast } from "react-toastify";
+import Loading from "../../components/Loading";
 
 export default function OMP() {
   const { id } = useParams();
@@ -86,6 +87,14 @@ export default function OMP() {
       await axios.delete(`${config.apiUrl}/omp/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
+      toast.success(
+        <div>
+          <p className="font-bold">Success.</p>
+          <p>OMP {data.ompNumber} Successfully Deleted</p>
+        </div>
+      );
+
       navigate("/omp"); // Redirect to data list after delete
     } catch (err) {
       setError(err.response?.data?.error || "Failed to delete data");
@@ -104,7 +113,7 @@ export default function OMP() {
 
   if (notFound) return <NotFound />;
   // if (error) return <p className="text-red-600 p-4">{error}</p>;
-  if (!data) return <p className="p-4 text-center">Loading...</p>;
+  if (!data) return <Loading />;
 
   return (
     <div className="">
@@ -171,7 +180,7 @@ function PolicyInfo({ data }) {
     <section className="mt-4">
       {/* heading */}
       <div className="text-center mb-2">
-        <h2 className="text-[#2d455f] font-bold text-lg md:text-xl mb-2">
+        <h2 className="text-[#2d455f] font-bold text-md md:text-xl mb-2">
           TRAVEL HEALTH INSURANCE CERTIFICATE
         </h2>
         <h3 className="text-lg">{data.typeOfTRV}</h3>

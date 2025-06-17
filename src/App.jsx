@@ -18,7 +18,7 @@ function App() {
 
         <div className="mx-auto max-w-6xl p-4 min-h-screen">
           <Routes>
-            <Route path="/" element={<Login />} />
+            <Route path="/bgichologin" element={<Login />} />
             <Route
               path="/dashboard"
               element={

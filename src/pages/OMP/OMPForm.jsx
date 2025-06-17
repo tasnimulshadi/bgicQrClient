@@ -34,7 +34,7 @@ export default function OMPForm() {
     travelDateTo: "",
     countryOfResidence: "Bangladesh",
     limitOfCover: "",
-    limitOfCoverCurrency: "",
+    currency: "",
     premium: "",
     vat: "",
     producer: "Md. Imran Rouf",
@@ -70,10 +70,22 @@ export default function OMPForm() {
         value:
           "Plan B : Zone 2 Students & Accompanying Spouse (Worldwide Excluding USA, CANADA)",
       },
-      { id: "AZ1", value: "Plan A : Zone 1 Worldwide Including USA, CANADA" },
-      { id: "AZ2", value: "Plan A : Zone 2 Worldwide Excluding USA, CANADA" },
-      { id: "BZ1", value: "Plan B : Zone 1 Worldwide Including USA, CANADA" },
-      { id: "BZ2", value: "Plan B : Zone 2 Worldwide Excluding USA, CANADA" },
+      {
+        id: "AZ1",
+        value: "Plan A : Zone 1 Worldwide Including USA, CANADA",
+      },
+      {
+        id: "AZ2",
+        value: "Plan A : Zone 2 Worldwide Excluding USA, CANADA",
+      },
+      {
+        id: "BZ1",
+        value: "Plan B : Zone 1 Worldwide Including USA, CANADA",
+      },
+      {
+        id: "BZ2",
+        value: "Plan B : Zone 2 Worldwide Excluding USA, CANADA",
+      },
     ],
     gender: [
       { id: 1, value: "Male" },
@@ -122,6 +134,16 @@ export default function OMPForm() {
     setError("");
 
     try {
+      // trimming the names of empty spaces
+      const trimmedData = Object.fromEntries(
+        Object.entries(data).map(([key, value]) => [
+          key,
+          typeof value === "string" ? value.trim() : value,
+        ])
+      );
+      setData(trimmedData);
+
+      // API Call
       if (params.id) {
         // Edit
         await axios.patch(`${config.apiUrl}/omp/${data.id}`, data, {
@@ -164,6 +186,7 @@ export default function OMPForm() {
       ...data,
       typeOfTRV: value,
       planCode: foundItem.id,
+      limitOfCover: foundItem.limit,
     });
   }
 
@@ -571,11 +594,11 @@ export default function OMPForm() {
             <input
               type="number"
               name="limitOfCover"
-              required
               min={1}
-              value={data.limitOfCover}
               onChange={handleChange}
-              className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+              required
+              value={data.limitOfCover}
+              className="w-full px-4 py-2 border rounded shadow-xl bg-gray-600 text-white"
               placeholder="Enter Limit Of Cover"
               title="Enter Limit Of Cover Amount"
             />
@@ -585,8 +608,8 @@ export default function OMPForm() {
           <div className="sm:col-span-1">
             <label className="block mb-1 font-medium">Currency</label>
             <select
-              name="limitOfCoverCurrency"
-              value={data.limitOfCoverCurrency}
+              name="currency"
+              value={data.currency}
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
