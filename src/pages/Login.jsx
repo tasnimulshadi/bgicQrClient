@@ -32,7 +32,7 @@ function Login() {
     } catch (err) {
       toast.error(
         <div>
-          <p className="font-bold">Login Failed</p>
+          <p className="font-bold">Login Failed.</p>
           <p>{err.message}</p>
         </div>
       );

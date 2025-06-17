@@ -642,31 +642,27 @@ function Authorization({ qrImage }) {
   // You might want to change the base URL for production
 
   return (
-    <section className="my-6 flex flex-col items-center text-center gap-6">
-      {/* QR Section */}
+    <section className="my-6 flex flex-col md:flex-row md:justify-between items-center text-center md:text-left gap-6">
+      {/* QR */}
       <div>
         <p className="font-semibold">Confirmation Code</p>
-        <div className="border-2 w-40 h-40 mx-auto my-2">
+        <div className="border-2 w-48 h-48 mx-auto md:mx-0">
           <img
             src={qrImage}
             className="w-full h-full object-contain"
             alt="QR Code"
           />
         </div>
-        <p className="text-gray-500 italic text-sm max-w-xs mx-auto">
+        <p className="text-gray-500 italic max-w-xs mx-auto md:mx-0">
           For official use, scan the above code to validate this confirmation
           letter.
         </p>
       </div>
 
-      {/* Signature Section */}
-      <div className="flex flex-col items-center font-semibold">
-        <p className="mb-2">AUTHORIZED SIGNATORY AND STAMP</p>
-        <img
-          src={signatureImage}
-          alt="signature"
-          className="w-32 sm:w-40 md:w-44"
-        />
+      {/* Signature */}
+      <div className="flex flex-col items-center md:items-end font-semibold">
+        <p>AUTHORIZED SIGNATORY AND STAMP</p>
+        <img src={signatureImage} alt="signature" className="w-44 mt-2" />
       </div>
     </section>
   );

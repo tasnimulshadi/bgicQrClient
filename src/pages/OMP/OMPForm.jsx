@@ -5,6 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import moment from "moment";
 import config from "../../utility/config";
+import { toast } from "react-toastify";
 
 export default function OMPForm() {
   const params = useParams();
@@ -15,6 +16,7 @@ export default function OMPForm() {
   const [error, setError] = useState("");
   const [data, setData] = useState({
     typeOfTRV: "",
+    planCode: "",
     ompNumber: "",
     policyNumber: "",
     issueDate: moment(new Date()).format("YYYY-MM-DD"),
@@ -48,46 +50,47 @@ export default function OMPForm() {
 
   const dropdownData = {
     typeOfTRV: [
-      { id: 1, value: "Plan A : Zone 1 Worldwide Including USA, CANADA" },
-      { id: 2, value: "Plan A : Zone 2 Worldwide Excluding USA, CANADA" },
-      { id: 3, value: "Plan B : Zone 1 Worldwide Including USA, CANADA" },
-      { id: 4, value: "Plan B : Zone 2 Worldwide Excluding USA, CANADA" },
+      {
+        id: "CZ1",
+        value:
+          "Plan A : Zone 1 Students & Accompanying Spouse (Worldwide Including USA, CANADA)",
+      },
+      {
+        id: "CZ2",
+        value:
+          "Plan A : Zone 2 Students & Accompanying Spouse (Worldwide Excluding USA, CANADA)",
+      },
+      {
+        id: "DZ1",
+        value:
+          "Plan B : Zone 1 Students & Accompanying Spouse (Worldwide Including USA, CANADA)",
+      },
+      {
+        id: "DZ2",
+        value:
+          "Plan B : Zone 2 Students & Accompanying Spouse (Worldwide Excluding USA, CANADA)",
+      },
+      { id: "AZ1", value: "Plan A : Zone 1 Worldwide Including USA, CANADA" },
+      { id: "AZ2", value: "Plan A : Zone 2 Worldwide Excluding USA, CANADA" },
+      { id: "BZ1", value: "Plan B : Zone 1 Worldwide Including USA, CANADA" },
+      { id: "BZ2", value: "Plan B : Zone 2 Worldwide Excluding USA, CANADA" },
     ],
     gender: [
       { id: 1, value: "Male" },
       { id: 2, value: "Female" },
     ],
-    countriesList: [
-      { id: 1, value: "Bangladesh" },
-      { id: 2, value: "India" },
-      { id: 3, value: "Pakistan" },
-      { id: 4, value: "Nepal" },
-      { id: 5, value: "Sri Lanka" },
-      { id: 6, value: "China" },
-      { id: 7, value: "Japan" },
-      { id: 8, value: "South Korea" },
-      { id: 9, value: "United States" },
-      { id: 10, value: "Canada" },
-      { id: 11, value: "United Kingdom" },
-      { id: 12, value: "Germany" },
-      { id: 13, value: "France" },
-      { id: 14, value: "Italy" },
-      { id: 15, value: "Australia" },
-      { id: 16, value: "New Zealand" },
-      { id: 17, value: "South Africa" },
-      { id: 18, value: "Brazil" },
-      { id: 19, value: "Russia" },
-      { id: 20, value: "Turkey" },
-    ],
     currency: [
       { id: 1, value: "US$" },
-      { id: 2, value: "BDT" },
-      { id: 3, value: "INR" },
-      { id: 4, value: "EUR" },
+      { id: 2, value: "EURO" },
+      { id: 3, value: "TK" },
     ],
     mop: [
-      { id: 1, value: "Pay Order" },
-      { id: 2, value: "Bank Transfer" },
+      { id: 1, value: "Cash" },
+      { id: 2, value: "Cheque" },
+      { id: 3, value: "D.D" },
+      { id: 4, value: "T.T" },
+      { id: 5, value: "Pay Order" },
+      { id: 6, value: "Credit Advice" },
     ],
     vatPecentage: 30,
   };
@@ -101,6 +104,7 @@ export default function OMPForm() {
           ...res.data,
           issueDate: moment(res.data.issueDate).format("YYYY-MM-DD"),
         };
+
         setData((prev) => ({ ...prev, ...transformedData }));
       } catch (err) {
         setError(err.response?.data?.error || "Failed to load data");
@@ -124,6 +128,12 @@ export default function OMPForm() {
           headers: { Authorization: `Bearer ${token}` },
         });
 
+        toast.success(
+          <div>
+            <p className="font-bold">OMP Updated.</p>
+            <p>{data.policyNumber}</p>
+          </div>
+        );
         navigate(`/omp/${data.id}`, { replace: true });
       } else {
         // Create
@@ -131,12 +141,31 @@ export default function OMPForm() {
           headers: { Authorization: `Bearer ${token}` },
         });
 
+        toast.success(
+          <div>
+            <p className="font-bold">OMP Created.</p>
+            <p>{data.policyNumber}</p>
+          </div>
+        );
         navigate("/omp", { replace: true });
       }
     } catch (err) {
       setError(err.response?.data?.error || "Failed to submit data");
     }
   };
+
+  function handleChange_typeOfTRV(e) {
+    const value = e.target.value; // this is item.id
+    const foundItem = dropdownData.typeOfTRV.find(
+      (item) => item.value === value
+    );
+
+    setData({
+      ...data,
+      typeOfTRV: value,
+      planCode: foundItem.id,
+    });
+  }
 
   // OMP No.
   // Policy No. // OMP No.
@@ -145,14 +174,16 @@ export default function OMPForm() {
     // BGIC/DZO/MISC/OMP-1250/05/2025
     const value = e.target.value;
 
-    if (value.length <= 4 && value.length > 0) {
+    if (/^\d{0,4}$/.test(value)) {
       setData({
         ...data,
         ompNumber: value,
         policyNumber:
-          "BGIC/DZO/MISC/OMP-" +
-          value +
-          moment(data.issueDate).format("/MM/YYYY"),
+          value === ""
+            ? ""
+            : "BGIC/DZO/MISC/OMP-" +
+              value +
+              moment(data.issueDate).format("/MM/YYYY"),
       });
     }
   }
@@ -162,7 +193,7 @@ export default function OMPForm() {
   function handleChange_travelDateFrom(e) {
     const startDate = e.target.value;
     const endDate = moment(startDate)
-      .add(data.travelDays, "days")
+      .add(data.travelDays - 1, "days")
       .format("YYYY-MM-DD");
 
     setData({
@@ -177,7 +208,7 @@ export default function OMPForm() {
   function handleChange_travelDays(e) {
     const value = e.target.value;
     const endDate = moment(data.travelDateFrom)
-      .add(value, "days")
+      .add(value - 1, "days")
       .format("YYYY-MM-DD");
 
     // Only allow digits (positive integers)
@@ -233,25 +264,44 @@ export default function OMPForm() {
     });
   }
 
+  const handleChange_onlyText = (e) => {
+    const { name, value } = e.target;
+    // Allow letters, spaces, dot, comma
+    if (/^[A-Za-z\s.,]*$/.test(value)) {
+      setData((prev) => ({ ...prev, [name]: value }));
+    }
+  };
+
   // Date of Birth // Age
   const age = moment().diff(moment(data.dob, "YYYY-MM-DD"), "years");
+
+  if (error) {
+    toast.error(
+      <div>
+        <p className="font-bold">Error!</p>
+        <p>{error}</p>
+      </div>
+    );
+    setError("");
+  }
 
   return (
     <div className="flex flex-col items-center">
       <h1 className="text-3xl font-bold mb-6">Form 2</h1>
 
-      {error && <p className="text-red-600 mb-4">{error}</p>}
+      {/* {error && <p className="text-red-600 mb-4">{error}</p>} */}
 
-      <form className=" grid grid-cols-1 gap-6 w-full" onSubmit={handleSubmit}>
+      <form className=" grid grid-cols-1 gap-6 w-full">
         {/* Type of TRV = Dropdown */}
         <div>
           <label className="block mb-1 font-medium">Type of TRV</label>
           <select
             name="typeOfTRV"
             value={data.typeOfTRV}
-            onChange={handleChange}
+            onChange={handleChange_typeOfTRV}
             required
             className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+            title=""
           >
             <option value="">Select A Type of TRV</option>
             {dropdownData.typeOfTRV.map((item) => (
@@ -264,31 +314,20 @@ export default function OMPForm() {
 
         {/* Policy No. */}
         <div className="grid sm:grid-cols-4 gap-4">
-          {/* Policy No. */}
-          <div className="sm:col-span-2">
-            <label className="block mb-1 font-medium">Policy No.</label>
-            <input
-              type="text"
-              name="policyNumber"
-              value={data.policyNumber}
-              className="w-full px-4 py-2 border rounded shadow-xl bg-gray-200"
-              readOnly
-              onFocus={() => policyNumberInputRef.current.focus()}
-            />
-          </div>
-
           {/* OMP No. */}
           <div className="sm:col-span-1">
             <label className="block mb-1 font-medium">OMP No.</label>
             <input
-              type="text"
+              type="number"
               name="ompNumber"
               onChange={handleChange_ompNumber}
               value={data.ompNumber}
-              pattern="^\d{1,4}$" // allow only digits
+              min={1}
+              max={9999}
               required
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
               ref={policyNumberInputRef}
+              placeholder="Enter OMP No."
             />
           </div>
 
@@ -308,6 +347,20 @@ export default function OMPForm() {
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
             />
           </div>
+
+          {/* Policy No. */}
+          <div className="sm:col-span-2">
+            <label className="block mb-1 font-medium">Policy No.</label>
+            <input
+              type="text"
+              name="policyNumber"
+              value={data.policyNumber}
+              className="w-full px-4 py-2 border rounded shadow-xl bg-gray-600 text-white"
+              readOnly
+              onFocus={() => policyNumberInputRef.current.focus()}
+              placeholder="Enter OMP No."
+            />
+          </div>
         </div>
 
         <hr />
@@ -323,7 +376,8 @@ export default function OMPForm() {
               required
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
               value={data.firstName}
-              onChange={handleChange}
+              onChange={handleChange_onlyText}
+              placeholder="Enter First Name"
             />
           </div>
 
@@ -336,14 +390,15 @@ export default function OMPForm() {
               required
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
               value={data.lastName}
-              onChange={handleChange}
+              onChange={handleChange_onlyText}
+              placeholder="Enter Last Name"
             />
           </div>
 
           {/* Date of Birth */}
           <div className="sm:col-span-1">
             <label className="block mb-1 font-medium">
-              Date of Birth ( {age} Years )
+              Date of Birth {age ? `(${age} Years)` : null}
             </label>
             <input
               type="date"
@@ -384,6 +439,7 @@ export default function OMPForm() {
             onChange={handleChange}
             required
             className="w-full px-4 py-2 border rounded resize-y shadow-xl bg-gray-100"
+            placeholder="Enter Full Address Here."
           />
         </div>
 
@@ -393,15 +449,16 @@ export default function OMPForm() {
           <div className="sm:col-span-1">
             <label className="block mb-1 font-medium">Mobile No.</label>
             <input
-              type="text"
+              type="tel"
               name="mobile"
               required
-              maxLength={11}
               value={data.mobile}
               onChange={handleChange}
               pattern="^01[0-9]{9}$"
+              maxLength={11} // works on type="tel"
               title="Mobile number must start with 01 and be exactly 11 digits"
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+              placeholder="Enter Mobile Number"
             />
           </div>
 
@@ -415,6 +472,7 @@ export default function OMPForm() {
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
               value={data.email}
               onChange={handleChange}
+              placeholder="Enter E-Mail"
             />
           </div>
 
@@ -425,18 +483,19 @@ export default function OMPForm() {
               type="text"
               name="passport"
               required
-              pattern="^[A-Z][0-9]{8}$"
-              title="Passport number must be 1 capital letter followed by 8 digits"
+              // pattern="^[A-Z][0-9]{8}$"
+              // title="Passport number must be 1 capital letter followed by 8 digits"
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
               value={data.passport}
               onChange={handleChange}
+              placeholder="Enter Passport Number"
             />
           </div>
         </div>
 
         <hr />
 
-        {/* Destination Read Only*/}
+        {/* Destination*/}
         <div className="grid sm:grid-cols-1 gap-4 items-end">
           <div className="">
             <label className="block mb-1 font-medium">Destination</label>
@@ -447,6 +506,8 @@ export default function OMPForm() {
               value={data.destination}
               onChange={handleChange}
               name="destination"
+              placeholder="Enter Travel Destination. For Multiple Destinations Please Use Comma"
+              title="For Multiple Destinations Please Use Comma"
             />
           </div>
         </div>
@@ -457,14 +518,15 @@ export default function OMPForm() {
           <div className="sm:col-span-1">
             <label className="block mb-1 font-medium">Tavel Days</label>
             <input
-              type="text"
+              type="number"
               name="travelDays"
               required
-              inputMode="numeric"
-              pattern="[1-9]*"
+              min={1}
+              max={120}
               value={data.travelDays}
               onChange={handleChange_travelDays}
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+              placeholder="Enter Travel Days"
             />
           </div>
 
@@ -496,7 +558,7 @@ export default function OMPForm() {
                   : ""
               }
               readOnly
-              className="w-full px-4 py-2 border rounded shadow-xl bg-gray-200"
+              className="w-full px-4 py-2 border rounded shadow-xl bg-gray-600 text-white"
             />
           </div>
         </div>
@@ -510,9 +572,12 @@ export default function OMPForm() {
               type="number"
               name="limitOfCover"
               required
+              min={1}
               value={data.limitOfCover}
               onChange={handleChange}
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+              placeholder="Enter Limit Of Cover"
+              title="Enter Limit Of Cover Amount"
             />
           </div>
 
@@ -542,10 +607,13 @@ export default function OMPForm() {
               type="number"
               name="premium"
               required
+              min={1}
               inputMode="numeric"
               value={data.premium}
               onChange={handleChange_premium}
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+              placeholder="Enter Premium Amount"
+              title="Enter Premium Amount"
             />
           </div>
 
@@ -557,7 +625,7 @@ export default function OMPForm() {
               inputMode="numeric"
               value={data.vat}
               readOnly
-              className="w-full px-4 py-2 border rounded shadow-xl bg-gray-200"
+              className="w-full px-4 py-2 border rounded shadow-xl bg-gray-600 text-white"
             />
           </div>
 
@@ -569,7 +637,7 @@ export default function OMPForm() {
               inputMode="numeric"
               value={Number(data.premium) + Number(data.vat)}
               readOnly
-              className="w-full px-4 py-2 border rounded shadow-xl bg-gray-200"
+              className="w-full px-4 py-2 border rounded shadow-xl bg-gray-600 text-white"
             />
           </div>
         </div>
@@ -585,11 +653,11 @@ export default function OMPForm() {
               type="number"
               name="mrNo"
               // required
-              inputMode="numeric"
-              pattern="[0-9]*"
-              value={data.mrNo}
+              min={1}
+              value={data.mrNo ? data.mrNo : ""}
               onChange={handleChange}
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+              placeholder="Enter MR Number"
             />
           </div>
 
@@ -616,8 +684,9 @@ export default function OMPForm() {
             <label className="block mb-1 font-medium">MOP</label>
             <select
               name="mop"
-              value={data.mop}
+              value={data.mop ? data.mop : ""}
               onChange={handleChange}
+              title="Method Of Payment"
               // required
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
             >
@@ -632,15 +701,15 @@ export default function OMPForm() {
 
           {/* Cheque No. */}
           <div className="sm:col-span-1">
-            <label className="block mb-1 font-medium">Cheque No</label>
+            <label className="block mb-1 font-medium">Cheque No.</label>
             <input
               type="text"
               name="chequeNo"
               // required
-              pattern="[0-9]*"
-              value={data.chequeNo}
+              value={data.chequeNo ? data.chequeNo : ""}
               onChange={handleChange}
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+              placeholder="Enter Cheque No."
             />
           </div>
 
@@ -668,9 +737,10 @@ export default function OMPForm() {
               type="text"
               name="bank"
               // required
-              value={data.bank}
+              value={data.bank ? data.bank : ""}
               onChange={handleChange}
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+              placeholder="Enter Bank Name"
             />
           </div>
 
@@ -681,9 +751,10 @@ export default function OMPForm() {
               type="text"
               name="bankBranch"
               // required
-              value={data.bankBranch}
+              value={data.bankBranch ? data.bankBranch : ""}
               onChange={handleChange}
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+              placeholder="Enter Bank's Branch Name"
             />
           </div>
         </div>
@@ -696,7 +767,8 @@ export default function OMPForm() {
             name="note"
             onChange={handleChange}
             className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
-            value={data.note}
+            value={data.note ? data.note : ""}
+            placeholder=""
           />
         </div>
 
@@ -705,8 +777,9 @@ export default function OMPForm() {
         {/* Submit */}
         <div className="flex gap-4">
           <button
-            type="submit"
+            type="button"
             className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
+            onClick={handleSubmit}
           >
             {params.id ? "Update" : "Submit"}
           </button>
