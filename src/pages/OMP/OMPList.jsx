@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { FaPlus } from "react-icons/fa";
+import config from "../../utility/config";
 
 function OMPList() {
   const { token } = useAuth();
@@ -14,10 +15,14 @@ function OMPList() {
     mobile: "",
     ompNumber: "",
   });
+  //pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const itemsPerPage = 20; // or match backend default
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [currentPage]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -25,14 +30,15 @@ function OMPList() {
       const query = new URLSearchParams();
       if (filters.mobile) query.append("mobile", filters.mobile);
       if (filters.ompNumber) query.append("ompNumber", filters.ompNumber);
+      query.append("page", currentPage);
+      query.append("limit", itemsPerPage);
 
-      const res = await axios.get(
-        `http://localhost:5000/api/v1/omp?${query.toString()}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      setDataList(res.data);
+      const res = await axios.get(`${config.apiUrl}/omp?${query.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setDataList(res.data.data);
+      setTotalItems(res.data.total);
     } catch (err) {
       setError(err.response?.data?.error || "Failed to fetch data");
       console.error("Fetch error:", err);
@@ -45,6 +51,13 @@ function OMPList() {
     e.preventDefault();
     fetchData();
   }
+
+  //pagination
+  const handlePageChange = (pageNum) => {
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    if (pageNum < 1 || pageNum > totalPages) return;
+    setCurrentPage(pageNum);
+  };
 
   return (
     <div className="flex flex-col items-center">
@@ -103,37 +116,62 @@ function OMPList() {
       ) : dataList.length === 0 ? (
         <p className="text-gray-600">No OMP Found.</p>
       ) : (
-        <div className="w-full max-w-6xl overflow-x-auto">
-          <table className="min-w-full border border-gray-300 rounded-lg">
-            <thead className="bg-gray-200">
-              <tr>
-                <th className="text-left px-4 py-3 border-b border-gray-300">
-                  Policy Number
-                </th>
-                <th className="text-right px-4 py-3 border-b border-gray-300">
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {dataList.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-100">
-                  <td className="px-4 py-3 border-b border-gray-300">
-                    {item.policyNumber}
-                  </td>
-                  <td className="px-4 py-3 border-b border-gray-300 text-right">
-                    <Link
-                      to={`/omp/${item.id}`}
-                      className="text-blue-600 hover:underline font-semibold"
-                    >
-                      View OMP
-                    </Link>
-                  </td>
+        <>
+          <div className="w-full max-w-6xl overflow-x-auto">
+            <table className="min-w-full border border-gray-300 rounded-lg">
+              <thead className="bg-gray-200">
+                <tr>
+                  <th className="text-left px-4 py-3 border-b border-gray-300">
+                    Policy Number
+                  </th>
+                  <th className="text-right px-4 py-3 border-b border-gray-300">
+                    Action
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {dataList.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-100">
+                    <td className="px-4 py-3 border-b border-gray-300">
+                      {item.policyNumber}
+                    </td>
+                    <td className="px-4 py-3 border-b border-gray-300 text-right">
+                      <Link
+                        to={`/omp/${item.id}`}
+                        className="text-blue-600 hover:underline font-semibold"
+                      >
+                        View OMP
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {/* Pagination Start */}
+          <div className="mt-4 flex gap-4 justify-center items-center">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-4 py-2 border rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+            >
+              Prev
+            </button>
+
+            <span className="px-4 py-2 font-medium text-gray-700 border rounded">
+              Page {currentPage}
+            </span>
+
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === Math.ceil(totalItems / itemsPerPage)}
+              className="px-4 py-2 border rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+          {/* Pagination End */}
+        </>
       )}
     </div>
   );

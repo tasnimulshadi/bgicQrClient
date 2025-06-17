@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import moment from "moment";
+import config from "../../utility/config";
 
 export default function OMPForm() {
   const params = useParams();
@@ -94,9 +95,7 @@ export default function OMPForm() {
   useEffect(() => {
     const fetchDataById = async () => {
       try {
-        const res = await axios.get(
-          `http://localhost:5000/api/v1/omp/${params.id}`
-        );
+        const res = await axios.get(`${config.apiUrl}/omp/${params.id}`);
 
         const transformedData = {
           ...res.data,
@@ -121,14 +120,14 @@ export default function OMPForm() {
     try {
       if (params.id) {
         // Edit
-        await axios.patch(`http://localhost:5000/api/v1/omp/${data.id}`, data, {
+        await axios.patch(`${config.apiUrl}/omp/${data.id}`, data, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         navigate(`/omp/${data.id}`, { replace: true });
       } else {
         // Create
-        await axios.post("http://localhost:5000/api/v1/omp", data, {
+        await axios.post(`${config.apiUrl}/omp`, data, {
           headers: { Authorization: `Bearer ${token}` },
         });
 

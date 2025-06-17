@@ -16,7 +16,9 @@ import { pdf, PDFDownloadLink } from "@react-pdf/renderer";
 import QRCode from "qrcode";
 import OMPPdf from "./OMPPdf";
 import headerImage from "../../assets/pdfheaderimg.jpg";
+import signatureImage from "../../assets/signature.jpg";
 import { formaNumberToComma } from "../../utility/utilityFunctions";
+import config from "../../utility/config";
 
 export default function OMP() {
   const { id } = useParams();
@@ -50,7 +52,7 @@ export default function OMP() {
   useEffect(() => {
     const fetchDataById = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/v1/omp/${id}`);
+        const res = await axios.get(`${config.apiUrl}/omp/${id}`);
         setData(res.data);
       } catch (err) {
         if (err.response?.status === 404) {
@@ -80,7 +82,7 @@ export default function OMP() {
     if (!confirmed) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/v1/omp/${id}`, {
+      await axios.delete(`${config.apiUrl}/omp/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       navigate("/omp"); // Redirect to data list after delete
@@ -144,7 +146,7 @@ export default function OMP() {
 // Component
 function Header() {
   return (
-    <header className="bg-red-400">
+    <header className="">
       <img alt="bgic logo" src={headerImage} className="h-full w-full" />
     </header>
   );
@@ -616,7 +618,7 @@ function Authorization({ qrImage }) {
       {/* Signature */}
       <div className="flex flex-col justify-center items-end font-semibold">
         <p>AUTHORIZED SIGNATORY AND STAMP</p>
-        <img src="/src/assets/signature.jpg" alt="signature" className="w-44" />
+        <img src={signatureImage} alt="signature" className="w-44" />
       </div>
     </section>
   );

@@ -1,5 +1,6 @@
 {
   "name": "qrclient",
+  "homepage":"http://omp.bgicl.com/",
   "private": true,
   "version": "0.0.0",
   "type": "module",

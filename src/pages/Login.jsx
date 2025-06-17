@@ -5,6 +5,7 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import config from "../utility/config";
 
 function Login() {
   const [userId, setUserId] = useState("");
@@ -21,7 +22,7 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:5000/api/v1/auth/login", {
+      const res = await axios.post(`${config.apiUrl}/auth/login`, {
         userid: userId,
         password: password,
       });
