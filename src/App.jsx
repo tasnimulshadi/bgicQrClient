@@ -7,10 +7,12 @@ import OMPList from "./pages/OMP/OMPList";
 import OMPForm from "./pages/OMP/OMPForm";
 import OMP from "./pages/OMP/OMP";
 import NotFound from "./pages/NotFound";
+import { ToastContainer } from "react-toastify";
 
 function App() {
   return (
     <div className="bg-gray-50">
+      <ToastContainer theme="colored" />
       <Router>
         <Navbar />
 

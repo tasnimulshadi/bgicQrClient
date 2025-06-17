@@ -19,6 +19,7 @@ import headerImage from "../../assets/pdfheaderimg.jpg";
 import signatureImage from "../../assets/signature.jpg";
 import { formaNumberToComma } from "../../utility/utilityFunctions";
 import config from "../../utility/config";
+import { toast } from "react-toastify";
 
 export default function OMP() {
   const { id } = useParams();
@@ -91,39 +92,51 @@ export default function OMP() {
     }
   };
 
+  if (error) {
+    toast.error(
+      <div>
+        <p className="font-bold">Error!</p>
+        <p>{error}</p>
+      </div>
+    );
+    setError("");
+  }
+
   if (notFound) return <NotFound />;
-  if (error) return <p className="text-red-600 p-4">{error}</p>;
+  // if (error) return <p className="text-red-600 p-4">{error}</p>;
   if (!data) return <p className="p-4 text-center">Loading...</p>;
 
   return (
     <div className="">
-      <div className="flex gap-4 mb-4 justify-between">
+      {/* Buttons */}
+      <div className="flex flex-col md:flex-row gap-4 mb-4 md:justify-between">
         {isAuthenticated && (
-          <div className="flex gap-3">
+          <div className="flex flex-col md:flex-row gap-3">
             <button
               onClick={handleEdit}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 transition cursor-pointer shadow-2xl flex gap-2 items-center"
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 transition cursor-pointer shadow-2xl flex gap-2 items-center justify-center"
             >
               Edit <FaEdit />
             </button>
             <button
               onClick={handleDelete}
-              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 transition cursor-pointer shadow-2xl flex gap-2 items-center"
+              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 transition cursor-pointer shadow-2xl flex gap-2 items-center justify-center"
             >
               Delete <FaTrashAlt />
             </button>
           </div>
         )}
-        <div className="flex gap-3">
+
+        <div className="flex flex-col md:flex-row gap-3">
           <PDFDownloadLink
             document={<OMPPdf qrImage={qrImage} data={data} />}
             fileName={`OMP-Document-${data.policyNumber}`}
-            className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-700 transition cursor-pointer shadow-2xl flex gap-2 items-center"
+            className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-700 transition cursor-pointer shadow-2xl flex gap-2 items-center justify-center"
           >
             Download <FaDownload />
           </PDFDownloadLink>
           <button
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 transition cursor-pointer shadow-2xl flex gap-2 items-center"
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 transition cursor-pointer shadow-2xl flex gap-2 items-center justify-center"
             onClick={handlePrint}
           >
             Print <FaPrint />
@@ -131,7 +144,8 @@ export default function OMP() {
         </div>
       </div>
 
-      <div className="mx-auto bg-white shadow-lg rounded-lg p-6 w-full">
+      {/* OMP Info */}
+      <div className="mx-auto bg-white shadow-lg rounded-sm sm:rounded-lg p-2 sm:p-6  w-full">
         <Header />
         <PolicyInfo data={data} />
         <Benefits />
@@ -157,7 +171,7 @@ function PolicyInfo({ data }) {
     <section className="mt-4">
       {/* heading */}
       <div className="text-center mb-2">
-        <h2 className="text-[#2d455f] font-bold text-xl mb-2">
+        <h2 className="text-[#2d455f] font-bold text-lg md:text-xl mb-2">
           TRAVEL HEALTH INSURANCE CERTIFICATE
         </h2>
         <h3 className="text-lg">{data.typeOfTRV}</h3>
@@ -165,7 +179,7 @@ function PolicyInfo({ data }) {
 
       {/* form */}
       <div className="mt-4">
-        <div className="flex justify-between">
+        <div className="flex flex-col sm:flex-row justify-between gap-2">
           <p>
             <b>POLICY NUMBER:</b> {data.policyNumber}
           </p>
@@ -173,54 +187,80 @@ function PolicyInfo({ data }) {
             <b>ISSUING DATE:</b> {moment(data.issueDate).format("DD/MM/YYYY")}
           </p>
         </div>
-        {/* form table*/}
-        <div className="grid grid-cols-8 gap-1 my-2">
-          <div className="bg-[#d3d3d3] px-1 col-span-2">DESTINATION</div>
-          <div className="bg-[#d3d3d3] px-1">FROM</div>
-          <div className="bg-[#d3d3d3] px-1">TO</div>
-          <div className="bg-[#d3d3d3] px-1 col-span-2">
+
+        {/* form table */}
+        {/* 
+      On mobile, we use grid-cols-1 so that each cell takes the full width.
+      On md screens and above, we revert to using 8 columns.
+    */}
+        <div className="grid grid-cols-1 md:grid-cols-8 gap-1 my-2 text-sm">
+          {/* Header Row */}
+          <div className="bg-[#d3d3d3] px-2 sm:px-1 py-1 md:col-span-2 order-1 sm:order-none">
+            DESTINATION
+          </div>
+          <div className="bg-[#d3d3d3] px-2 sm:px-1 py-1 order-3 sm:order-none">
+            FROM
+          </div>
+          <div className="bg-[#d3d3d3] px-2 sm:px-1 py-1 order-5 sm:order-none">
+            TO
+          </div>
+          <div className="bg-[#d3d3d3] px-2 sm:px-1 py-1 md:col-span-2 order-7 sm:order-none">
             COUNTRY OF RESIDENCE
           </div>
-          <div className="bg-[#d3d3d3] px-1 col-span-2">TELEPHONE NUMBER</div>
-          <div className="bg-[#d3d3d3] px-1 col-span-2 font-bold">
-            {/* {formatDestinationList(data.destination)} */}
+          <div className="bg-[#d3d3d3] px-2 sm:px-1 py-1 md:col-span-2 order-9 sm:order-none">
+            TELEPHONE NUMBER
+          </div>
+
+          {/* Data Row */}
+          <div className="bg-[#d3d3d3] px-2 sm:px-1 py-1 md:col-span-2 font-bold order-2 sm:order-none">
             {data.destination}
           </div>
-          <div className="bg-[#d3d3d3] px-1 font-bold">
+          <div className="bg-[#d3d3d3] px-2 sm:px-1 py-1 font-bold order-4 sm:order-none">
             {moment(data.travelDateFrom).format("DD/MM/YYYY")}
           </div>
-          <div className="bg-[#d3d3d3] px-1 font-bold">
+          <div className="bg-[#d3d3d3] px-2 sm:px-1 py-1 font-bold order-6 sm:order-none">
             {moment(data.travelDateTo).format("DD/MM/YYYY")}
           </div>
-          <div className="bg-[#d3d3d3] px-1 col-span-2 font-bold">
+          <div className="bg-[#d3d3d3] px-2 sm:px-1 py-1 md:col-span-2 font-bold order-8 sm:order-none">
             {data.countryOfResidence}
           </div>
-          <div className="bg-[#d3d3d3] px-1 col-span-2 font-bold">
+          <div className="bg-[#d3d3d3] px-2 sm:px-1 py-1 md:col-span-2 font-bold order-10 sm:order-none">
             +88 {data.mobile}
           </div>
-          <div className="bg-[#d3d3d3] px-1 col-span-2">FULL NAME</div>
-          <div className="bg-[#d3d3d3] px-1 col-span-2">DATE OF BIRTH</div>
-          <div className="bg-[#d3d3d3] px-1 col-span-2">PASSPORT NUMBER</div>
-          <div className=" col-span-2"></div>
-          <div className="bg-[#d3d3d3] px-1 col-span-2 font-bold uppercase">
+
+          {/* Second Header Row */}
+          <div className="bg-[#d3d3d3] px-2 sm:px-1 py-1 md:col-span-2 order-11 sm:order-none">
+            FULL NAME
+          </div>
+          <div className="bg-[#d3d3d3] px-2 sm:px-1 py-1 md:col-span-2 order-13 sm:order-none">
+            DATE OF BIRTH
+          </div>
+          <div className="bg-[#d3d3d3] px-2 sm:px-1 py-1 md:col-span-2 order-15 sm:order-none">
+            PASSPORT NUMBER
+          </div>
+          <div className="hidden md:block md:col-span-2 order-none"></div>
+
+          {/* Second Data Row */}
+          <div className="bg-[#d3d3d3] px-2 sm:px-1 py-1 md:col-span-2 font-bold uppercase order-12 sm:order-none">
             {data.firstName} {data.lastName}
           </div>
-          <div className="bg-[#d3d3d3] px-1 col-span-2 font-bold">
+          <div className="bg-[#d3d3d3] px-2 sm:px-1 py-1 md:col-span-2 font-bold order-14 sm:order-none">
             {moment(data.dob).format("DD/MM/YYYY")}
           </div>
-          <div className="bg-[#d3d3d3] px-1 col-span-2 font-bold">
+          <div className="bg-[#d3d3d3] px-2 sm:px-1 py-1 md:col-span-2 font-bold order-16 sm:order-none">
             {data.passport}
           </div>
         </div>
+
         {/* info */}
         <div>
-          <p className=" text-[#696969] italic">
+          <p className="text-[#696969] italic">
             Contrary to any stipulations stated in the General Conditions, the
             Plan subscribed to, under this Letter of Confirmation, covers
             exclusively the below mentioned Benefits, Limitations & Excesses
             shown in the table hereafter.
           </p>
-          <p className=" text-[#696969] italic">
+          <p className="text-[#696969] italic">
             The General Conditions form an integral part of this Letter of
             Confirmation.
           </p>
@@ -489,7 +529,7 @@ function Assistance() {
         className="mb-2 flex justify-between items-center"
         onClick={() => setShowAssistance(!showAssistance)}
       >
-        <h2 className="text-xl font-bold text-[#2c455a]">
+        <h2 className="text-lg md:text-xl font-bold text-[#2c455a]">
           HOW TO REQUEST ASSISTANCE?
         </h2>
         <div className="text-lg font-bold flex justify-center items-center gap-2 cursor-pointer mb-2 text-[#2c455a]">
@@ -536,7 +576,7 @@ function Assistance() {
           </p>
 
           {/* Contact Table */}
-          <table className="my-4 w-full text-center border-[1px] border-gray-500 text-xl">
+          <table className="my-4 w-full text-center border-[1px] border-gray-500 text-lg md:text-xl">
             <tbody>
               <tr className="bg-[#c0e3a9]">
                 <td className="border-[1px] border-gray-500 py-1" colSpan={2}>
@@ -602,23 +642,31 @@ function Authorization({ qrImage }) {
   // You might want to change the base URL for production
 
   return (
-    <section className="my-6 flex justify-between items-start">
-      {/* QR */}
+    <section className="my-6 flex flex-col items-center text-center gap-6">
+      {/* QR Section */}
       <div>
         <p className="font-semibold">Confirmation Code</p>
-        <div className="border-2 w-50 h-50">
-          <img src={qrImage} className="w-full h-full" />
+        <div className="border-2 w-40 h-40 mx-auto my-2">
+          <img
+            src={qrImage}
+            className="w-full h-full object-contain"
+            alt="QR Code"
+          />
         </div>
-        <p className="text-gray-500 italic">
+        <p className="text-gray-500 italic text-sm max-w-xs mx-auto">
           For official use, scan the above code to validate this confirmation
           letter.
         </p>
       </div>
 
-      {/* Signature */}
-      <div className="flex flex-col justify-center items-end font-semibold">
-        <p>AUTHORIZED SIGNATORY AND STAMP</p>
-        <img src={signatureImage} alt="signature" className="w-44" />
+      {/* Signature Section */}
+      <div className="flex flex-col items-center font-semibold">
+        <p className="mb-2">AUTHORIZED SIGNATORY AND STAMP</p>
+        <img
+          src={signatureImage}
+          alt="signature"
+          className="w-32 sm:w-40 md:w-44"
+        />
       </div>
     </section>
   );

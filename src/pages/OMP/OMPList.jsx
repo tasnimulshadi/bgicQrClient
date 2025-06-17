@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { FaPlus } from "react-icons/fa";
 import config from "../../utility/config";
+import { toast } from "react-toastify";
 
 function OMPList() {
   const { token } = useAuth();
@@ -40,7 +41,7 @@ function OMPList() {
       setDataList(res.data.data);
       setTotalItems(res.data.total);
     } catch (err) {
-      setError(err.response?.data?.error || "Failed to fetch data");
+      setError(err.response?.data?.error || "Failed to load data");
       console.error("Fetch error:", err);
     } finally {
       setLoading(false);
@@ -58,6 +59,16 @@ function OMPList() {
     if (pageNum < 1 || pageNum > totalPages) return;
     setCurrentPage(pageNum);
   };
+
+  if (error) {
+    toast.error(
+      <div>
+        <p className="font-bold">Error!</p>
+        <p>{error}</p>
+      </div>
+    );
+    setError("");
+  }
 
   return (
     <div className="flex flex-col items-center">
@@ -109,7 +120,7 @@ function OMPList() {
 
       <hr />
 
-      {error && <p className="text-red-600 mb-4">{error}</p>}
+      {/* {error && <p className="text-red-600 mb-4">{error}</p>} */}
 
       {loading ? (
         <p className="text-gray-600">Loading...</p>

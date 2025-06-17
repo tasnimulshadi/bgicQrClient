@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import config from "../utility/config";
+import { toast } from "react-toastify";
 
 function Login() {
   const [userId, setUserId] = useState("");
@@ -29,7 +30,12 @@ function Login() {
       login(res.data.token);
       window.location.href = "/dashboard";
     } catch (err) {
-      alert("Login failed");
+      toast.error(
+        <div>
+          <p className="font-bold">Login Failed</p>
+          <p>{err.message}</p>
+        </div>
+      );
     }
   };
 
