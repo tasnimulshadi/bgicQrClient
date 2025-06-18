@@ -15,6 +15,7 @@ function Login() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    document.title = `BGIC - OMP Login`;
     if (token) {
       navigate("/dashboard");
     }
@@ -56,6 +57,7 @@ function Login() {
           value={userId}
           onChange={(e) => setUserId(e.target.value)}
           className="w-full mb-4 px-4 py-2 border bg-gray-50  border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
         />
         <input
           type="password"
@@ -63,6 +65,7 @@ function Login() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="w-full mb-6 px-4 py-2 border bg-gray-50   border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
         />
         <button
           type="submit"

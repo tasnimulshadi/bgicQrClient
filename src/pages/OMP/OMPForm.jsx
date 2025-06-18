@@ -108,6 +108,8 @@ export default function OMPForm() {
   };
 
   useEffect(() => {
+    document.title = `BGIC - OMP ${params.id ? "Update" : "Create"}`;
+
     const fetchDataById = async () => {
       try {
         const res = await axios.get(`${config.apiUrl}/omp/${params.id}`);
@@ -310,11 +312,17 @@ export default function OMPForm() {
 
   return (
     <div className="flex flex-col items-center">
-      <h1 className="text-3xl font-bold mb-6">Form 2</h1>
+      <h1 className="text-3xl font-bold mb-6">
+        {params.id ? "Update OMP" : "Create New OMP"}
+      </h1>
 
       {/* {error && <p className="text-red-600 mb-4">{error}</p>} */}
 
-      <form className=" grid grid-cols-1 gap-6 w-full">
+      <form
+        className=" grid grid-cols-1 gap-6 w-full"
+        onSubmit={handleSubmit}
+        onKeyDown={(e) => e.key === "Enter" && e.preventDefault()} // This ensures that even if Enter is pressed inside an input, it won't trigger the form's submit.
+      >
         {/* Type of TRV = Dropdown */}
         <div>
           <label className="block mb-1 font-medium">Type of TRV</label>
@@ -325,6 +333,7 @@ export default function OMPForm() {
             required
             className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
             title=""
+            tabIndex={1}
           >
             <option value="">Select A Type of TRV</option>
             {dropdownData.typeOfTRV.map((item) => (
@@ -351,6 +360,7 @@ export default function OMPForm() {
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
               ref={policyNumberInputRef}
               placeholder="Enter OMP No."
+              tabIndex={2}
             />
           </div>
 
@@ -368,6 +378,8 @@ export default function OMPForm() {
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+              tabIndex={3}
+              min="2000-01-01"
             />
           </div>
 
@@ -401,6 +413,7 @@ export default function OMPForm() {
               value={data.firstName}
               onChange={handleChange_onlyText}
               placeholder="Enter First Name"
+              tabIndex={4}
             />
           </div>
 
@@ -415,6 +428,7 @@ export default function OMPForm() {
               value={data.lastName}
               onChange={handleChange_onlyText}
               placeholder="Enter Last Name"
+              tabIndex={5}
             />
           </div>
 
@@ -430,6 +444,8 @@ export default function OMPForm() {
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+              tabIndex={6}
+              min="1925-01-01"
             />
           </div>
 
@@ -442,6 +458,7 @@ export default function OMPForm() {
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+              tabIndex={7}
             >
               <option value="">Select A Gender</option>
               {dropdownData.gender.map((item) => (
@@ -463,6 +480,7 @@ export default function OMPForm() {
             required
             className="w-full px-4 py-2 border rounded resize-y shadow-xl bg-gray-100"
             placeholder="Enter Full Address Here."
+            tabIndex={8}
           />
         </div>
 
@@ -482,6 +500,7 @@ export default function OMPForm() {
               title="Mobile number must start with 01 and be exactly 11 digits"
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
               placeholder="Enter Mobile Number"
+              tabIndex={9}
             />
           </div>
 
@@ -496,6 +515,7 @@ export default function OMPForm() {
               value={data.email}
               onChange={handleChange}
               placeholder="Enter E-Mail"
+              tabIndex={10}
             />
           </div>
 
@@ -512,6 +532,7 @@ export default function OMPForm() {
               value={data.passport}
               onChange={handleChange}
               placeholder="Enter Passport Number"
+              tabIndex={11}
             />
           </div>
         </div>
@@ -531,6 +552,7 @@ export default function OMPForm() {
               name="destination"
               placeholder="Enter Travel Destination. For Multiple Destinations Please Use Comma"
               title="For Multiple Destinations Please Use Comma"
+              tabIndex={12}
             />
           </div>
         </div>
@@ -550,6 +572,7 @@ export default function OMPForm() {
               onChange={handleChange_travelDays}
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
               placeholder="Enter Travel Days"
+              tabIndex={13}
             />
           </div>
 
@@ -567,6 +590,8 @@ export default function OMPForm() {
               onChange={handleChange_travelDateFrom}
               required
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+              tabIndex={14}
+              min="2000-01-01"
             />
           </div>
 
@@ -598,9 +623,10 @@ export default function OMPForm() {
               onChange={handleChange}
               required
               value={data.limitOfCover}
-              className="w-full px-4 py-2 border rounded shadow-xl bg-gray-600 text-white"
+              className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
               placeholder="Enter Limit Of Cover"
               title="Enter Limit Of Cover Amount"
+              tabIndex={15}
             />
           </div>
 
@@ -613,6 +639,7 @@ export default function OMPForm() {
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+              tabIndex={16}
             >
               <option value="">Select A Currency</option>
               {dropdownData.currency.map((item) => (
@@ -637,6 +664,7 @@ export default function OMPForm() {
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
               placeholder="Enter Premium Amount"
               title="Enter Premium Amount"
+              tabIndex={17}
             />
           </div>
 
@@ -681,6 +709,7 @@ export default function OMPForm() {
               onChange={handleChange}
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
               placeholder="Enter MR Number"
+              tabIndex={18}
             />
           </div>
 
@@ -696,6 +725,8 @@ export default function OMPForm() {
               onChange={handleChange}
               // required
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+              tabIndex={19}
+              min="2000-01-01"
             />
           </div>
         </div>
@@ -712,6 +743,7 @@ export default function OMPForm() {
               title="Method Of Payment"
               // required
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+              tabIndex={20}
             >
               <option value="">Select A MOP</option>
               {dropdownData.mop.map((item) => (
@@ -733,6 +765,7 @@ export default function OMPForm() {
               onChange={handleChange}
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
               placeholder="Enter Cheque No."
+              tabIndex={21}
             />
           </div>
 
@@ -750,6 +783,8 @@ export default function OMPForm() {
               onChange={handleChange}
               // required
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
+              tabIndex={22}
+              min="2000-01-01"
             />
           </div>
 
@@ -764,6 +799,7 @@ export default function OMPForm() {
               onChange={handleChange}
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
               placeholder="Enter Bank Name"
+              tabIndex={23}
             />
           </div>
 
@@ -778,6 +814,7 @@ export default function OMPForm() {
               onChange={handleChange}
               className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
               placeholder="Enter Bank's Branch Name"
+              tabIndex={24}
             />
           </div>
         </div>
@@ -792,6 +829,7 @@ export default function OMPForm() {
             className="w-full px-4 py-2 border rounded shadow-xl bg-gray-100"
             value={data.note ? data.note : ""}
             placeholder=""
+            tabIndex={25}
           />
         </div>
 
@@ -800,9 +838,9 @@ export default function OMPForm() {
         {/* Submit */}
         <div className="flex gap-4">
           <button
-            type="button"
+            type="submit"
             className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
-            onClick={handleSubmit}
+            tabIndex={26}
           >
             {params.id ? "Update" : "Submit"}
           </button>

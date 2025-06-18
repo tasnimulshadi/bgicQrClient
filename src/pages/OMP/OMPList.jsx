@@ -29,6 +29,7 @@ function OMPList() {
   const itemsPerPage = 20; // or match backend default
 
   useEffect(() => {
+    document.title = `BGIC - OMP List`;
     fetchData();
   }, [currentPage]);
 

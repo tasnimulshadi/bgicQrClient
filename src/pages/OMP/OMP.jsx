@@ -52,6 +52,8 @@ export default function OMP() {
   };
 
   useEffect(() => {
+    document.title = `BGIC - OMP Certificate`;
+
     const fetchDataById = async () => {
       try {
         const res = await axios.get(`${config.apiUrl}/omp/${id}`);

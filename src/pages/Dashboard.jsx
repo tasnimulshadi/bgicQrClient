@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 // src/pages/Dashboard.jsx
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FaListAlt, FaPlus } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
@@ -13,6 +13,10 @@ function Dashboard() {
       route: "omp",
     },
   ]);
+
+  useEffect(() => {
+    document.title = `BGIC - OMP Dashboard`;
+  }, []);
 
   return (
     <div className="flex flex-col items-center w-full">
