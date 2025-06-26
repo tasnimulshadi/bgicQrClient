@@ -1,4 +1,4 @@
-// src/pages/OMP/OMPForm.jsx
+// src/pages/MRForm.jsx
 import axios from "axios";
 import { useEffect, useState } from "react"; // Removed useRef as it's no longer needed
 import { useNavigate, useParams } from "react-router-dom";
@@ -10,6 +10,12 @@ import { toast } from "react-toastify";
 // Dropdown data and VAT percentage are constant, so define them outside the component
 // to prevent re-creation on every render.
 const dropdownData = {
+  issuingOffice: [{ id: "DZO", value: "Dhaka Zonal Office" }],
+  classOfInsurance: [
+    { id: "MC", value: "Marine Cargo" },
+    { id: "MISC/OMP", value: "Miscellaneous" },
+  ],
+  coIns: [{ id: "1", value: "Co-Ins" }],
   typeOfTRV: [
     {
       id: "CZ1",
@@ -72,11 +78,12 @@ const dropdownData = {
     { id: 4, value: "T.T" },
     { id: 5, value: "Pay Order" },
     { id: 6, value: "Credit Advice" },
+    { id: 7, value: "Bank Guarantee" },
   ],
   vatPercentage: 30, // Renamed for clarity
 };
 
-export default function OMPForm() {
+export default function MRForm() {
   const params = useParams();
   const { token } = useAuth();
   const navigate = useNavigate();
@@ -117,14 +124,9 @@ export default function OMPForm() {
     note: "",
   });
 
-  // Calculate age based on DOB
-  const age = data.dob
-    ? moment().diff(moment(data.dob, "YYYY-MM-DD"), "years")
-    : null;
-
   // Effect to set document title and fetch data for edit mode
   useEffect(() => {
-    document.title = `BGIC - OMP ${params.id ? "Update" : "Create"}`;
+    document.title = `BGIC - MR ${params.id ? "Update" : "Create"}`;
 
     const fetchDataById = async () => {
       try {
@@ -161,7 +163,7 @@ export default function OMPForm() {
     }
 
     // Focus on the first input field on component mount
-    document.getElementById("typeOfTRV").focus();
+    document.getElementById("issuingOffice").focus();
   }, [params.id]); // Added params.id to dependency array
 
   // Effect to handle error toasts
@@ -412,11 +414,11 @@ export default function OMPForm() {
 
         toast.success(
           <div>
-            <p className="font-bold">OMP Updated.</p>
+            <p className="font-bold">MR Updated.</p>
             <p>{trimmedData.policyNumber}</p>
           </div>
         );
-        navigate(`/omp/${trimmedData.id}`, { replace: true });
+        navigate(`/mr/${trimmedData.id}`, { replace: true });
       } else {
         // Create
         await axios.post(`${config.apiUrl}/omp`, trimmedData, {
@@ -426,11 +428,11 @@ export default function OMPForm() {
 
         toast.success(
           <div>
-            <p className="font-bold">OMP Created.</p>
+            <p className="font-bold">MR Created.</p>
             <p>{trimmedData.policyNumber}</p>
           </div>
         );
-        navigate("/omp", { replace: true });
+        navigate("/mr", { replace: true });
       }
     } catch (err) {
       setError(err.response?.data?.error || "Failed to submit data");
@@ -444,205 +446,65 @@ export default function OMPForm() {
       {" "}
       {/* Added padding for better mobile view */}
       <h1 className="text-4xl font-bold mb-6 text-blue-950">
-        {params.id ? "Update OMP" : "Create New OMP"}
+        {params.id ? "Update MR" : "Create New MR"}
       </h1>
       <form
         className=" grid grid-cols-1 gap-6 w-full  bg-white p-8 rounded-lg shadow-2xl" // Max width and shadow for better presentation
         onSubmit={handleSubmit}
       >
-        {/* Type of TRV = Dropdown */}
-        <div>
-          <label
-            htmlFor="typeOfTRV"
-            className="block mb-1 font-medium text-gray-700"
-          >
-            Type of TRV
-          </label>
-          <select
-            name="typeOfTRV"
-            value={data.typeOfTRV ?? ""}
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-            id="typeOfTRV"
-            tabIndex={1}
-            onKeyDown={(e) => handleKeyDown(e, "ompNumber")}
-          >
-            <option value="" disabled>
-              Select Plan
-            </option>
-            {dropdownData.typeOfTRV.map((item) => (
-              <option key={item.id} value={item.value}>
-                {item.value}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Policy No. Section */}
-        <div className="grid sm:grid-cols-4 gap-4">
-          {/* OMP No. */}
+        {/* Issuing */}
+        <div className="grid sm:grid-cols-2 gap-4">
+          {/* Issuing Office = Dropdown */}
           <div className="sm:col-span-1">
             <label
-              htmlFor="ompNumber"
+              htmlFor="issuingOffice"
               className="block mb-1 font-medium text-gray-700"
             >
-              OMP No.
-            </label>
-            <input
-              type="number"
-              name="ompNumber"
-              onChange={handleChange}
-              value={data.ompNumber ?? ""}
-              min={1}
-              max={9999}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              placeholder="Enter OMP No."
-              tabIndex={2}
-              onWheel={(e) => e.target.blur()} // Prevents number input from changing on scroll
-              id="ompNumber"
-              onKeyDown={(e) => handleKeyDown(e, "issueDate")}
-            />
-          </div>
-
-          {/* Issue Date */}
-          <div className="sm:col-span-1">
-            <label
-              htmlFor="issueDate"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              Issue Date
-            </label>
-            <input
-              type="date"
-              name="issueDate"
-              value={data.issueDate}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              tabIndex={3}
-              min="2000-01-01"
-              title="Date format: MM/DD/YYYY. Example: 12/31/2022"
-              id="issueDate"
-              onKeyDown={(e) => handleKeyDown(e, "firstName")}
-            />
-          </div>
-
-          {/* Policy No. (Read-only) */}
-          <div className="sm:col-span-2">
-            <label
-              htmlFor="policyNumber"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              Policy No.
-            </label>
-            <input
-              type="text"
-              name="policyNumber"
-              value={data.policyNumber ?? ""}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-300 text-gray-700 cursor-not-allowed"
-              readOnly
-              disabled
-              placeholder="Auto-generated Policy No."
-              id="policyNumber" // Added ID for consistency
-            />
-          </div>
-        </div>
-
-        <hr className="my-4 border-gray-300" />
-
-        {/* Issued Person Info */}
-        <div className="grid sm:grid-cols-4 gap-4">
-          {/* First Name */}
-          <div className="sm:col-span-1">
-            <label
-              htmlFor="firstName"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              First Name
-            </label>
-            <input
-              type="text"
-              name="firstName"
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              value={data.firstName ?? ""}
-              onChange={handleChange}
-              placeholder="Enter First Name"
-              tabIndex={4}
-              id="firstName"
-              onKeyDown={(e) => handleKeyDown(e, "lastName")}
-            />
-          </div>
-
-          {/* Last Name */}
-          <div className="sm:col-span-1">
-            <label
-              htmlFor="lastName"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              Last Name
-            </label>
-            <input
-              type="text"
-              name="lastName"
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              value={data.lastName ?? ""}
-              onChange={handleChange}
-              placeholder="Enter Last Name"
-              tabIndex={5}
-              id="lastName"
-              onKeyDown={(e) => handleKeyDown(e, "dob")}
-            />
-          </div>
-
-          {/* Date of Birth */}
-          <div className="sm:col-span-1">
-            <label
-              htmlFor="dob"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              Date of Birth {age ? `(${age} Years)` : null}
-            </label>
-            <input
-              type="date"
-              name="dob"
-              value={data.dob}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              tabIndex={6}
-              min="1925-01-01"
-              title="Date format: MM/DD/YYYY. Example: 12/31/2022"
-              id="dob"
-              onKeyDown={(e) => handleKeyDown(e, "gender")}
-            />
-          </div>
-
-          {/* Gender */}
-          <div className="sm:col-span-1">
-            <label
-              htmlFor="gender"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              Gender
+              Issuing Office
             </label>
             <select
-              name="gender"
-              value={data.gender ?? ""}
+              name="issuingOffice"
+              value={data.issuingOffice ?? ""}
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              tabIndex={7}
-              id="gender"
-              onKeyDown={(e) => handleKeyDown(e, "address")}
+              id="issuingOffice"
+              tabIndex={1}
+              onKeyDown={(e) => handleKeyDown(e, "classOfInsurance")}
             >
               <option value="" disabled>
-                Select Gender
+                Select Office
               </option>
-              {dropdownData.gender.map((item) => (
+              {dropdownData.issuingOffice.map((item) => (
+                <option key={item.id} value={item.value}>
+                  {item.value}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Class of Insurance = Dropdown */}
+          <div className="sm:col-span-1">
+            <label
+              htmlFor="classOfInsurance"
+              className="block mb-1 font-medium text-gray-700"
+            >
+              Class of Insurance
+            </label>
+            <select
+              name="classOfInsurance"
+              value={data.classOfInsurance ?? ""}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+              id="classOfInsurance"
+              tabIndex={1}
+              onKeyDown={(e) => handleKeyDown(e, "mrId")}
+            >
+              <option value="" disabled>
+                Select Class
+              </option>
+              {dropdownData.classOfInsurance.map((item) => (
                 <option key={item.id} value={item.value}>
                   {item.value}
                 </option>
@@ -651,108 +513,188 @@ export default function OMPForm() {
           </div>
         </div>
 
-        {/* Address */}
-        <div>
-          <label
-            htmlFor="address"
-            className="block mb-1 font-medium text-gray-700"
-          >
-            Address
-          </label>
-          <input // Changed to input as original was input
-            name="address"
-            value={data.address ?? ""}
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-2 border border-gray-300 rounded-md resize-y shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-            placeholder="Enter Full Address Here."
-            tabIndex={8}
-            id="address"
-            onKeyDown={(e) => handleKeyDown(e, "mobile")}
-          />
-        </div>
+        <hr className="border-gray-300" />
 
-        {/* Issued Person Contact Info */}
+        {/* Issued Against */}
         <div className="grid sm:grid-cols-3 gap-4">
-          {/* Mobile No. */}
-          <div className="sm:col-span-1">
+          {/* Issued Against (Read-only) */}
+          <div className="sm:col-span-3">
             <label
-              htmlFor="mobile"
+              htmlFor="mrNo"
               className="block mb-1 font-medium text-gray-700"
             >
-              Mobile No.
-            </label>
-            <input
-              type="tel"
-              name="mobile"
-              required
-              value={data.mobile ?? ""}
-              onChange={handleChange}
-              pattern="^01[0-9]{9}$"
-              maxLength={11}
-              title="Mobile number must start with '01' and be 11 digits long."
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              placeholder="Enter Mobile Number"
-              tabIndex={9}
-              id="mobile"
-              onKeyDown={(e) => handleKeyDown(e, "email")}
-            />
-          </div>
-
-          {/* E Mail */}
-          <div className="sm:col-span-1">
-            <label
-              htmlFor="email"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              E Mail
-            </label>
-            <input
-              type="email"
-              name="email"
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              value={data.email ?? ""}
-              onChange={handleChange}
-              placeholder="Enter E-Mail"
-              tabIndex={10}
-              id="email"
-              onKeyDown={(e) => handleKeyDown(e, "passport")}
-            />
-          </div>
-
-          {/* Passport No. */}
-          <div className="sm:col-span-1">
-            <label
-              htmlFor="passport"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              Passport No.
+              Issued Against: Policy No
             </label>
             <input
               type="text"
-              name="passport"
+              name="mrNo"
+              value={data.mrNo ?? ""}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-300 text-gray-700 cursor-not-allowed"
+              readOnly
+              disabled
+              placeholder="Auto-generated Policy No"
+              id="mrNo" // Added ID for consistency
+            />
+          </div>
+
+          {/* Policy Id. */}
+          <div className="sm:col-span-1">
+            <label
+              htmlFor="mrId"
+              className="block mb-1 font-medium text-gray-700"
+            >
+              Policy ID
+            </label>
+            <input
+              type="number"
+              name="mrId"
+              onChange={handleChange}
+              value={data.mrId ?? ""}
+              min={1}
+              max={9999}
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              value={data.passport ?? ""}
+              placeholder="Enter Policy ID"
+              tabIndex={2}
+              onWheel={(e) => e.target.blur()} // Prevents number input from changing on scroll
+              id="mrId"
+              onKeyDown={(e) => handleKeyDown(e, "mrDate")}
+            />
+          </div>
+
+          {/* Policy Date > Issued Against */}
+          <div className="sm:col-span-1">
+            <label
+              htmlFor="mrDate"
+              className="block mb-1 font-medium text-gray-700"
+            >
+              Policy Date
+            </label>
+            <input
+              type="date"
+              name="mrDate"
+              value={data.mrDate}
               onChange={handleChange}
-              placeholder="Enter Passport Number"
-              tabIndex={11}
-              id="passport"
-              onKeyDown={(e) => handleKeyDown(e, "destination")}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+              tabIndex={3}
+              min="2000-01-01"
+              title="Date format: MM/DD/YYYY. Example: 12/31/2022"
+              id="mrDate"
+              onKeyDown={(e) => handleKeyDown(e, "Adfghjsdfghjkdsfgfdhdfg")}
+            />
+          </div>
+
+          {/* Co-Ins = Dropdown */}
+          <div className="sm:col-span-1">
+            <label
+              htmlFor="classOfInsurance"
+              className="block mb-1 font-medium text-gray-700"
+            >
+              Co-Ins
+            </label>
+            <select
+              name="classOfInsurance"
+              value={data.classOfInsurance ?? ""}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+              id="classOfInsurance"
+              tabIndex={1}
+              onKeyDown={(e) => handleKeyDown(e, "mrId")}
+            >
+              <option value="">No</option>
+              {dropdownData.coIns.map((item) => (
+                <option key={item.id} value={item.value}>
+                  {item.value}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <hr className="border-gray-300" />
+
+        {/* MR No. Section */}
+        <div className="grid sm:grid-cols-4 gap-4">
+          {/* MR Id. */}
+          <div className="sm:col-span-1">
+            <label
+              htmlFor="mrId"
+              className="block mb-1 font-medium text-gray-700"
+            >
+              MR ID
+            </label>
+            <input
+              type="number"
+              name="mrId"
+              onChange={handleChange}
+              value={data.mrId ?? ""}
+              min={1}
+              max={9999}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+              placeholder="Enter MR ID"
+              tabIndex={2}
+              onWheel={(e) => e.target.blur()} // Prevents number input from changing on scroll
+              id="mrId"
+              onKeyDown={(e) => handleKeyDown(e, "mrDate")}
+            />
+          </div>
+
+          {/* MR Date */}
+          <div className="sm:col-span-1">
+            <label
+              htmlFor="mrDate"
+              className="block mb-1 font-medium text-gray-700"
+            >
+              MR Date
+            </label>
+            <input
+              type="date"
+              name="mrDate"
+              value={data.mrDate}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+              tabIndex={3}
+              min="2000-01-01"
+              title="Date format: MM/DD/YYYY. Example: 12/31/2022"
+              id="mrDate"
+              onKeyDown={(e) => handleKeyDown(e, "Adfghjsdfghjkdsfgfdhdfg")}
+            />
+          </div>
+
+          {/* MR No (Read-only) */}
+          <div className="sm:col-span-2">
+            <label
+              htmlFor="mrNo"
+              className="block mb-1 font-medium text-gray-700"
+            >
+              MR No
+            </label>
+            <input
+              type="text"
+              name="mrNo"
+              value={data.mrNo ?? ""}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-300 text-gray-700 cursor-not-allowed"
+              readOnly
+              disabled
+              placeholder="Auto-generated MR No"
+              id="mrNo" // Added ID for consistency
             />
           </div>
         </div>
 
-        <hr className="my-4 border-gray-300" />
+        <hr className="border-gray-300" />
 
-        {/* Destination*/}
+        {/* Received From*/}
         <div>
           <label
             htmlFor="destination"
             className="block mb-1 font-medium text-gray-700"
           >
-            Destination
+            Received From
           </label>
           <input
             type="text"
@@ -761,87 +703,20 @@ export default function OMPForm() {
             value={data.destination ?? ""}
             onChange={handleChange}
             name="destination"
-            placeholder="Enter Travel Destination. For Multiple Destinations Please Use Comma"
-            title="For multiple destinations, separate with commas (,) and use 'and' before the last one. Example: France, UK and Germany"
+            placeholder="Received with thanks from"
+            title="Received with thanks from"
             tabIndex={12}
             id="destination"
             onKeyDown={(e) => handleKeyDown(e, "travelDays")}
           />
         </div>
 
-        {/* Travel Dates & Days */}
-        <div className="grid sm:grid-cols-5 gap-4 items-end">
-          {/* Travel Days */}
-          <div className="sm:col-span-1">
-            <label
-              htmlFor="travelDays"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              Travel Days
-            </label>
-            <input
-              type="number"
-              name="travelDays"
-              required
-              min={1}
-              max={120}
-              value={data.travelDays ?? ""}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              placeholder="Enter Travel Days"
-              tabIndex={13}
-              onWheel={(e) => e.target.blur()}
-              id="travelDays"
-              onKeyDown={(e) => handleKeyDown(e, "travelDateFrom")}
-            />
-          </div>
+        <hr className="border-gray-300" />
 
-          {/* Travel Date From */}
-          <div className="sm:col-span-2">
-            <label
-              htmlFor="travelDateFrom"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              From
-            </label>
-            <input
-              type="date"
-              name="travelDateFrom"
-              value={data.travelDateFrom}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              tabIndex={14}
-              min="2000-01-01"
-              title="Date format: MM/DD/YYYY. Example: 12/31/2022"
-              id="travelDateFrom"
-              onKeyDown={(e) => handleKeyDown(e, "limitOfCover")}
-            />
-          </div>
-
-          {/* Travel Date To (Read-only) */}
-          <div className="sm:col-span-2">
-            <label
-              htmlFor="travelDateTo"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              To
-            </label>
-            <input
-              type="date"
-              value={data.travelDateTo}
-              readOnly
-              disabled
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-300 text-gray-700 cursor-not-allowed"
-              id="travelDateTo" // Added ID for consistency
-            />
-          </div>
-        </div>
-
-        {/* Premium & Cover */}
-        <div className="grid sm:grid-cols-5 gap-4 items-end">
+        {/* Premium & MOP */}
+        <div className="grid sm:grid-cols-4 gap-4 items-end">
           {/* Limit Of Cover */}
-          <div className="sm:col-span-1">
+          {/* <div className="sm:col-span-2">
             <label
               htmlFor="limitOfCover"
               className="block mb-1 font-medium text-gray-700"
@@ -863,10 +738,10 @@ export default function OMPForm() {
               id="limitOfCover"
               onKeyDown={(e) => handleKeyDown(e, "currency")}
             />
-          </div>
+          </div> */}
 
-          {/* Limit Of Cover Currency */}
-          <div className="sm:col-span-1">
+          {/* Currency */}
+          {/* <div className="sm:col-span-2">
             <label
               htmlFor="currency"
               className="block mb-1 font-medium text-gray-700"
@@ -892,7 +767,7 @@ export default function OMPForm() {
                 </option>
               ))}
             </select>
-          </div>
+          </div> */}
 
           {/* Premium */}
           <div className="sm:col-span-1">
@@ -916,6 +791,58 @@ export default function OMPForm() {
               tabIndex={17}
               onWheel={(e) => e.target.blur()}
               id="premium"
+              onKeyDown={(e) => handleKeyDown(e, "stamp")}
+            />
+          </div>
+
+          {/* Stamp */}
+          <div className="sm:col-span-1">
+            <label
+              htmlFor="stamp"
+              className="block mb-1 font-medium text-gray-700"
+            >
+              Stamp
+            </label>
+            <input
+              type="number"
+              name="stamp"
+              required
+              min={1}
+              inputMode="numeric"
+              value={data.stamp ?? ""}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+              placeholder="Enter Stamp Amount"
+              title="Enter Stamp Amount"
+              tabIndex={17}
+              onWheel={(e) => e.target.blur()}
+              id="stamp"
+              onKeyDown={(e) => handleKeyDown(e, "coinsnet")}
+            />
+          </div>
+
+          {/* CoIns(Net) */}
+          <div className="sm:col-span-1">
+            <label
+              htmlFor="coinsnet"
+              className="block mb-1 font-medium text-gray-700"
+            >
+              CoIns(Net)
+            </label>
+            <input
+              type="number"
+              name="coinsnet"
+              required
+              min={1}
+              inputMode="numeric"
+              value={data.coinsnet ?? ""}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+              placeholder="Enter CoIns(net) Amount"
+              title="Enter CoIns(net) Amount"
+              tabIndex={17}
+              onWheel={(e) => e.target.blur()}
+              id="coinsnet"
               onKeyDown={(e) => handleKeyDown(e, "mrNo")}
             />
           </div>
@@ -959,57 +886,7 @@ export default function OMPForm() {
           </div>
         </div>
 
-        <hr className="my-4 border-gray-300" />
-
-        {/* MR Section */}
-        <div className="grid sm:grid-cols-2 gap-4 items-end">
-          {/* Mr No. */}
-          <div className="sm:col-span-1">
-            <label
-              htmlFor="mrNo"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              Mr No.
-            </label>
-            <input
-              type="number"
-              name="mrNo"
-              required
-              min={1}
-              value={data.mrNo ?? ""}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              placeholder="Enter MR Number"
-              tabIndex={18}
-              onWheel={(e) => e.target.blur()}
-              id="mrNo"
-              onKeyDown={(e) => handleKeyDown(e, "mrDate")}
-            />
-          </div>
-
-          {/* Mr Date */}
-          <div className="sm:col-span-1">
-            <label
-              htmlFor="mrDate"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              Mr Date
-            </label>
-            <input
-              type="date"
-              name="mrDate"
-              value={data.mrDate}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              tabIndex={19}
-              min="2000-01-01"
-              title="Date format: MM/DD/YYYY. Example: 12/31/2022"
-              id="mrDate"
-              onKeyDown={(e) => handleKeyDown(e, "mop")}
-            />
-          </div>
-        </div>
+        <hr className="border-gray-300" />
 
         {/* Bank Info */}
         <div className="grid sm:grid-cols-2 gap-4 items-end">
@@ -1154,7 +1031,7 @@ export default function OMPForm() {
           />
         </div>
 
-        <hr className="my-4 border-gray-300" />
+        <hr className="border-gray-300" />
 
         {/* Submit */}
         <div className="flex justify-center mt-4">
@@ -1167,11 +1044,7 @@ export default function OMPForm() {
             id="submitButton"
             disabled={loading} // Disable button when loading
           >
-            {loading
-              ? "Processing..."
-              : params.id
-              ? "Update OMP"
-              : "Create OMP"}
+            {loading ? "Processing..." : params.id ? "Update MR" : "Create MR"}
           </button>
         </div>
       </form>

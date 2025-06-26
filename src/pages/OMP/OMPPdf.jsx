@@ -9,7 +9,7 @@ import {
 import headerImage from "../../assets/pdfheaderimg.jpg";
 import signatureImage from "../../assets/signature.jpg";
 import moment from "moment";
-import { formaNumberToComma } from "../../utility/utilityFunctions";
+import { formatNumberToComma } from "../../utility/utilityFunctions";
 
 // Create styles
 const styles = StyleSheet.create({
@@ -458,7 +458,7 @@ const OMPPdf = ({ qrImage, data }) => (
             }}
           >
             Premium (including VAT) : BDT{" "}
-            {formaNumberToComma(Number(data.premium) + Number(data.vat))}
+            {formatNumberToComma(Number(data.premium) + Number(data.vat))}
           </Text>
           <Text>Above sums insured are per person & per period of cover.</Text>
           <Text>

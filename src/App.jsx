@@ -8,15 +8,21 @@ import OMPForm from "./pages/OMP/OMPForm";
 import OMP from "./pages/OMP/OMP";
 import NotFound from "./pages/NotFound";
 import { ToastContainer } from "react-toastify";
+import MRList from "./pages/MR/MRList";
+import MRForm from "./pages/MR/MRForm";
 
 function App() {
   return (
-    <div className="bg-gray-50">
+    <div className="bg-texture bg-gray-50 bg-cover min-h-screen">
+      {" "}
+      {/*bg-texture  bg-gray-50 */}
       <ToastContainer theme="colored" />
       <Router>
         <Navbar />
 
-        <div className="mx-auto max-w-6xl p-4 min-h-screen">
+        <div className="mx-auto max-w-6xl p-4 min-h-screen ">
+          {" "}
+          {/*  bg-gray-50 */}
           <Routes>
             <Route path="/bgichologin" element={<Login />} />
             <Route
@@ -37,6 +43,16 @@ function App() {
                 </PrivateRoute>
               }
             />
+            {/* MR */}
+            <Route
+              path="/mr"
+              element={
+                <PrivateRoute>
+                  <MRList />
+                </PrivateRoute>
+              }
+            />
+
             {/* OMP */}
             <Route
               path="/omp/new"
@@ -46,6 +62,16 @@ function App() {
                 </PrivateRoute>
               }
             />
+            {/* MR */}
+            <Route
+              path="/mr/new"
+              element={
+                <PrivateRoute>
+                  <MRForm />
+                </PrivateRoute>
+              }
+            />
+
             {/* OMP */}
             <Route
               path="/omp/edit/:id"

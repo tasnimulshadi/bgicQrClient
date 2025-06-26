@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react"; // Added useCallback for better performance
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import NotFound from "../NotFound";
@@ -14,29 +14,50 @@ import {
 } from "react-icons/fa";
 import { pdf, PDFDownloadLink } from "@react-pdf/renderer";
 import QRCode from "qrcode";
-import OMPPdf from "./OMPPdf";
-import headerImage from "../../assets/pdfheaderimg.jpg";
-import signatureImage from "../../assets/signature.jpg";
-import { formaNumberToComma } from "../../utility/utilityFunctions";
-import config from "../../utility/config";
-import { toast } from "react-toastify";
-import Loading from "../../components/Loading";
+import OMPPdf from "./OMPPdf"; // Assuming OMPPdf component is defined elsewhere for PDF generation
+import headerImage from "../../assets/pdfheaderimg.jpg"; // Path to header image for PDF/display
+import signatureImage from "../../assets/signature.jpg"; // Path to signature image for PDF/display
+import { formatNumberToComma } from "../../utility/utilityFunctions"; // Utility for number formatting
+import config from "../../utility/config"; // Configuration for API endpoints
+import { toast } from "react-toastify"; // For displaying notifications
+import Loading from "../../components/Loading"; // Loading spinner component
 
+/**
+ * Main OMP component to display details of a single OMP policy,
+ * and provide options to edit, delete, download PDF, and print.
+ */
 export default function OMP() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const { isAuthenticated, token } = useAuth();
-  const [data, setData] = useState(null);
-  const [error, setError] = useState("");
-  const [notFound, setNotFound] = useState(false);
-  const [qrImage, setQrImage] = useState(null);
+  const { id } = useParams(); // Get OMP ID from URL parameters
+  const navigate = useNavigate(); // Hook for navigation
+  const { isAuthenticated, token } = useAuth(); // Authentication context
+  const [data, setData] = useState(null); // State to store OMP policy data
+  const [error, setError] = useState(""); // State to store error messages
+  const [notFound, setNotFound] = useState(false); // State to track if OMP is not found (404)
+  const [qrImage, setQrImage] = useState(null); // State to store QR code image URL (base64)
+  const [loading, setLoading] = useState(true); // State to manage overall loading status
 
-  const generatePdfBlob = async () => {
-    const blob = await pdf(<OMPPdf qrImage={qrImage} data={data} />).toBlob();
-    const url = URL.createObjectURL(blob);
-    return url;
-  };
+  /**
+   * Generates a PDF blob URL from the OMPPdf component.
+   * This is used for both download and print functionalities.
+   * returns Promise<string> A promise that resolves to the object URL of the PDF blob.
+   */
+  const generatePdfBlob = useCallback(async () => {
+    if (!qrImage || !data) return null; // Ensure data and QR image are available
+    try {
+      const blob = await pdf(<OMPPdf qrImage={qrImage} data={data} />).toBlob();
+      const url = URL.createObjectURL(blob);
+      return url;
+    } catch (pdfError) {
+      console.error("Error generating PDF blob:", pdfError);
+      setError("Failed to generate PDF for download/print.");
+      return null;
+    }
+  }, [qrImage, data]); // Dependencies for useCallback
 
+  /**
+   * Handles the printing of the OMP certificate.
+   * Generates a PDF blob and opens it in a hidden iframe for printing.
+   */
   const handlePrint = async () => {
     const url = await generatePdfBlob();
 
@@ -45,46 +66,95 @@ export default function OMP() {
     iframe.src = url;
     document.body.appendChild(iframe);
 
-    iframe.onload = () => {
+    try {
       iframe.contentWindow.focus();
       iframe.contentWindow.print();
-    };
+    } catch (printError) {
+      console.error("Error during print operation:", printError);
+      toast.error(
+        "Could not initiate printing. Please try downloading the PDF instead."
+      );
+    }
   };
 
+  /**
+   * Effect hook to fetch OMP data by ID and generate QR code.
+   * Runs once on component mount or when 'id' changes.
+   */
   useEffect(() => {
-    document.title = `BGIC - OMP Certificate`;
+    document.title = `BGIC - OMP Certificate`; // Set document title dynamically
 
     const fetchDataById = async () => {
+      setLoading(true); // Set loading true before fetching
       try {
         const res = await axios.get(`${config.apiUrl}/omp/${id}`);
         setData(res.data);
+        setError(""); // Clear previous errors
+        setNotFound(false); // Ensure notFound is false on success
       } catch (err) {
         if (err.response?.status === 404) {
-          setNotFound(true);
+          setNotFound(true); // Set notFound if resource is not found
         } else {
-          setError(err.response?.data?.error || "Failed to load data");
+          setError(err.response?.data?.error || "Failed to load OMP data.");
         }
+      } finally {
+        setLoading(false); // Set loading false after fetch attempt
       }
     };
     fetchDataById();
 
+    // Generate QR code for the current page URL
     const pageUrl = `${window.location.origin}/omp/${id}`;
-    QRCode.toDataURL(pageUrl, { errorCorrectionLevel: "H" })
+    QRCode.toDataURL(pageUrl, { errorCorrectionLevel: "H", width: 200 }) // Added width for better control
       .then((url) => setQrImage(url))
-      .catch((err) => console.error(err));
-  }, [id]);
+      .catch((err) => {
+        console.error("Error generating QR code:", err);
+        setError("Failed to generate QR code.");
+      });
+  }, [id]); // Dependency array includes 'id'
 
+  /**
+   * Handles navigation to the edit OMP form.
+   */
   const handleEdit = () => {
-    navigate(`/omp/edit/${id}`); // Adjust route based on your app
+    navigate(`/omp/edit/${id}`); // Navigate to the edit route for the current OMP
   };
 
+  /**
+   * Handles the deletion of the current OMP policy.
+   * Displays a confirmation dialog before proceeding with deletion.
+   */
   const handleDelete = async () => {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this data? This action cannot be undone."
-    );
+    // Custom modal for confirmation instead of window.confirm
+    const userConfirmed = await new Promise((resolve) => {
+      const confirmDialog = document.createElement("div");
+      confirmDialog.className =
+        "fixed inset-0 bg-[#4a5565ab]  flex items-center justify-center z-50";
+      confirmDialog.innerHTML = `
+        <div class="bg-white rounded-lg p-8 shadow-xl max-w-sm mx-auto text-center">
+          <p class="text-lg font-semibold mb-4">Are you sure you want to delete this data?</p>
+          <p class="text-red-500 mb-6">This action cannot be undone.</p>
+          <div class="flex justify-center gap-4">
+            <button id="cancelDelete" class="px-5 py-2 bg-gray-300 rounded-md hover:bg-gray-400">Cancel</button>
+            <button id="confirmDelete" class="px-5 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Delete</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(confirmDialog);
 
-    if (!confirmed) return;
+      document.getElementById("cancelDelete").onclick = () => {
+        document.body.removeChild(confirmDialog);
+        resolve(false);
+      };
+      document.getElementById("confirmDelete").onclick = () => {
+        document.body.removeChild(confirmDialog);
+        resolve(true);
+      };
+    });
 
+    if (!userConfirmed) return;
+
+    setLoading(true); // Set loading true during deletion
     try {
       await axios.delete(`${config.apiUrl}/omp/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -92,71 +162,93 @@ export default function OMP() {
 
       toast.success(
         <div>
-          <p className="font-bold">Success.</p>
-          <p>OMP {data.ompNumber} Successfully Deleted</p>
+          <p className="font-bold">Success!</p>
+          <p>OMP {data?.ompNumber} Successfully Deleted.</p>
         </div>
       );
 
-      navigate("/omp"); // Redirect to data list after delete
+      navigate("/omp", { replace: true }); // Redirect to OMP list after successful deletion
     } catch (err) {
-      setError(err.response?.data?.error || "Failed to delete data");
+      setError(err.response?.data?.error || "Failed to delete OMP.");
+      console.error("Delete error:", err);
+    } finally {
+      setLoading(false); // Set loading false after deletion attempt
     }
   };
 
-  if (error) {
-    toast.error(
-      <div>
-        <p className="font-bold">Error!</p>
-        <p>{error}</p>
-      </div>
-    );
-    setError("");
-  }
+  /**
+   * Effect hook to display error toasts when the 'error' state changes.
+   */
+  useEffect(() => {
+    if (error) {
+      toast.error(
+        <div>
+          <p className="font-bold">Error!</p>
+          <p>{error}</p>
+        </div>
+      );
+      setError(""); // Clear the error after showing the toast
+    }
+  }, [error]);
 
-  if (notFound) return <NotFound />;
-  // if (error) return <p className="text-red-600 p-4">{error}</p>;
-  if (!data) return <Loading />;
+  // Conditional rendering based on loading, notFound, or data availability
+  if (notFound) return <NotFound />; // Render NotFound component if OMP is not found
+  if (loading || !data) return <Loading message="Loading OMP details..." />; // Show loading spinner while fetching or if data is null
 
+  // Main render for OMP details
   return (
-    <div className="">
-      {/* Buttons */}
-      <div className="flex flex-col md:flex-row gap-4 mb-4 md:justify-between">
+    <div className="flex flex-col items-center min-h-screen">
+      {/* Action Buttons: Edit, Delete, Download PDF, Print */}
+      <div className="w-full flex flex-col md:flex-row gap-4 mb-6 md:justify-between px-4">
+        {/* Edit and Delete Buttons (only if authenticated) */}
         {isAuthenticated && (
-          <div className="flex flex-col md:flex-row gap-3">
+          <div className="flex flex-wrap gap-3">
             <button
               onClick={handleEdit}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 transition cursor-pointer shadow-2xl flex gap-2 items-center justify-center"
+              className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center gap-2"
+              disabled={loading} // Disable during loading
             >
-              Edit <FaEdit />
+              <FaEdit className="text-lg" /> Edit
             </button>
             <button
               onClick={handleDelete}
-              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 transition cursor-pointer shadow-2xl flex gap-2 items-center justify-center"
+              className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center gap-2"
+              disabled={loading} // Disable during loading
             >
-              Delete <FaTrashAlt />
+              <FaTrashAlt className="text-lg" /> Delete
             </button>
           </div>
         )}
 
-        <div className="flex flex-col md:flex-row gap-3">
+        {/* Download and Print Buttons */}
+        <div className="flex flex-wrap gap-3 md:ml-auto">
           <PDFDownloadLink
             document={<OMPPdf qrImage={qrImage} data={data} />}
-            fileName={`OMP-Document-${data.policyNumber}`}
-            className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-700 transition cursor-pointer shadow-2xl flex gap-2 items-center justify-center"
+            fileName={`OMP-Certificate-${data.policyNumber}.pdf`}
+            className="px-4 py-2 bg-orange-500 text-white font-semibold rounded-lg shadow-md hover:bg-orange-600 transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center gap-2"
           >
-            Download <FaDownload />
+            {({ loading: pdfLoading }) =>
+              pdfLoading ? (
+                "Generating PDF..."
+              ) : (
+                <>
+                  <FaDownload className="text-lg" /> Download
+                </>
+              )
+            }
           </PDFDownloadLink>
           <button
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 transition cursor-pointer shadow-2xl flex gap-2 items-center justify-center"
+            className="px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center gap-2"
             onClick={handlePrint}
+            disabled={loading} // Disable during loading
           >
-            Print <FaPrint />
+            <FaPrint className="text-lg" /> Print
           </button>
         </div>
       </div>
 
       {/* OMP Info */}
-      <div className="mx-auto bg-white shadow-lg rounded-sm sm:rounded-lg p-2 sm:p-6  w-full">
+      <div className="mx-auto bg-white shadow-xl rounded-sm sm:rounded-lg p-2 sm:p-6  w-full">
         <Header />
         <PolicyInfo data={data} />
         <Benefits />
@@ -503,7 +595,7 @@ function Premium({ data }) {
       {/* Premium */}
       <h2 className="text-lg font-bold my-2">
         Premium (including VAT) : BDT{" "}
-        {formaNumberToComma(Number(data.premium) + Number(data.vat))}
+        {formatNumberToComma(Number(data.premium) + Number(data.vat))}
       </h2>
       <div className="text-sm font-bold">
         Above sums insured are per person & per period of cover.

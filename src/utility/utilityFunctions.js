@@ -1,6 +1,6 @@
 // Utility
 
-export function formaNumberToComma(num) {
+export function formatNumberToComma(num) {
   return Number(num).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,

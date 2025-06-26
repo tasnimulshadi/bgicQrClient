@@ -1,4 +1,4 @@
-// src/pages/OMP/OMPList.jsx
+// src/pages/MR/MRList.jsx
 import axios from "axios";
 import { useEffect, useState, useCallback } from "react"; // Added useCallback
 import { Link } from "react-router-dom";
@@ -14,7 +14,7 @@ import { toast } from "react-toastify";
 import { formatNumberToComma } from "../../utility/utilityFunctions";
 import Loading from "../../components/Loading";
 
-function OMPList() {
+function MRList() {
   const { token } = useAuth();
   const [dataList, setDataList] = useState([]);
   const [error, setError] = useState("");
@@ -59,7 +59,7 @@ function OMPList() {
         setTotalItems(res.data.total);
         setError("");
       } catch (err) {
-        setError(err.response?.data?.error || "Failed to load OMP data.");
+        setError(err.response?.data?.error || "Failed to load MR data.");
         console.error("Fetch error:", err);
         setDataList([]);
         setTotalItems(0);
@@ -72,7 +72,7 @@ function OMPList() {
 
   // Effect hook to fetch data
   useEffect(() => {
-    document.title = "BGIC - OMP List";
+    document.title = "BGIC - MR List";
 
     let debounceTimer;
     clearTimeout(debounceTimer);
@@ -131,13 +131,13 @@ function OMPList() {
     <div className="flex flex-col items-center min-h-screen ">
       {/* Page Header and Add New Button */}
       <div className="flex justify-between items-center w-full mb-6 px-4 sha">
-        <h1 className="text-4xl font-bold text-blue-950">OMP List</h1>
+        <h1 className="text-4xl font-bold text-blue-950">MR List</h1>
         <Link
-          to={"/omp/new"}
+          to={"/mr/new"}
           className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-500 to-green-700 text-white font-semibold rounded-lg shadow-md hover:from-green-600 hover:to-green-800 transition duration-300 ease-in-out transform hover:scale-105"
         >
           <FaPlus className="mr-2 text-lg" />
-          Add New OMP
+          Add New MR
         </Link>
       </div>
 
@@ -146,12 +146,12 @@ function OMPList() {
         className="w-full grid grid-cols-1 sm:grid-cols-3 md:grid-cols-7 gap-4 bg-white p-6 rounded-lg shadow-xl mb-8"
         onSubmit={handleFilterSubmit}
       >
-        {/* Search by OMP Number */}
+        {/* Search by MR Number */}
         <input
           type="number"
           name="ompNumber"
           id="ompNumberFilter" // Added ID for accessibility
-          placeholder="Search OMP No."
+          placeholder="Search MR No."
           value={filters.ompNumber}
           onChange={(e) =>
             setFilters((prev) => ({ ...prev, ompNumber: e.target.value }))
@@ -183,15 +183,15 @@ function OMPList() {
       {/* Conditional Rendering for Loading, No Data, or Table */}
       {loading ? (
         // Loading component
-        <Loading message="Fetching OMP data..." />
+        <Loading message="Fetching MR data..." />
       ) : dataList.length === 0 ? (
         // No data message
         <div className="bg-white p-8 rounded-lg shadow-xl text-center w-full max-w-md">
           <p className="text-xl text-gray-700 font-semibold">
-            No OMP records found.
+            No MR records found.
           </p>
           <p className="text-md text-gray-500 mt-2">
-            Try adjusting your search filters or add a new OMP.
+            Try adjusting your search filters or add a new MR.
           </p>
         </div>
       ) : (
@@ -205,13 +205,13 @@ function OMPList() {
                     ID
                   </th>
                   <th className="text-left px-4 py-3 text-sm font-semibold uppercase tracking-wider">
-                    OMP No.
+                    MR Id
                   </th>
                   <th className="text-left px-4 py-3 text-sm font-semibold uppercase tracking-wider">
-                    Policy No.
+                    Money Receipt No
                   </th>
                   <th className="text-left px-4 py-3 text-sm font-semibold uppercase tracking-wider">
-                    Mobile No.
+                    Issued Against
                   </th>
                   <th className="text-left px-4 py-3 text-sm font-semibold uppercase tracking-wider">
                     Premium
@@ -249,10 +249,10 @@ function OMPList() {
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
                       <Link
-                        to={`/omp/${item.id}`}
+                        to={`/mr/${item.id}`}
                         className="text-blue-600 hover:text-blue-800 font-semibold transition duration-150 ease-in-out"
                       >
-                        View Certificate
+                        View Receipt
                       </Link>
                     </td>
                   </tr>
@@ -297,4 +297,4 @@ function OMPList() {
   );
 }
 
-export default OMPList;
+export default MRList;
