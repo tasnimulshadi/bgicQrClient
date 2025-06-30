@@ -10,6 +10,7 @@ import NotFound from "./pages/NotFound";
 import { ToastContainer } from "react-toastify";
 import MRList from "./pages/MR/MRList";
 import MRForm from "./pages/MR/MRForm";
+import MR from "./pages/MR/MR";
 
 function App() {
   return (
@@ -77,8 +78,16 @@ function App() {
               path="/omp/edit/:id"
               element={
                 <PrivateRoute>
-                  {/* <OMPForm /> */}
                   <OMPForm />
+                </PrivateRoute>
+              }
+            />
+            {/* MR */}
+            <Route
+              path="/mr/edit/:id"
+              element={
+                <PrivateRoute>
+                  <MRForm />
                 </PrivateRoute>
               }
             />
@@ -86,6 +95,9 @@ function App() {
             {/* this one stays public */}
             {/* OMP */}
             <Route path="/omp/:id" element={<OMP />} />
+            {/* MR */}
+            <Route path="/mr/:id" element={<MR />} />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>

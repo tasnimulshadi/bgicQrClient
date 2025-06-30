@@ -211,7 +211,7 @@ const benefits = [
 // Define your PDF document
 const OMPPdf = ({ qrImage, data }) => (
   <Document
-    title={`OMP-Document-${data.policyNumber}`}
+    title={`OMP-Document-${data.policyNo}`}
     author="Bangladesh General Insurance Company PLC."
   >
     <Page size="A4" style={styles.page}>

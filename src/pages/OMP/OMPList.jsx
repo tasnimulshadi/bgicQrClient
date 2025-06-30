@@ -21,7 +21,7 @@ function OMPList() {
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({
     mobile: "",
-    ompNumber: "",
+    policyNumber: "",
   });
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -44,7 +44,8 @@ function OMPList() {
       try {
         const query = new URLSearchParams();
         if (filters.mobile) query.append("mobile", filters.mobile);
-        if (filters.ompNumber) query.append("ompNumber", filters.ompNumber);
+        if (filters.policyNumber)
+          query.append("policyNumber", filters.policyNumber);
         query.append("page", currentPage);
         query.append("limit", itemsPerPage);
 
@@ -149,12 +150,12 @@ function OMPList() {
         {/* Search by OMP Number */}
         <input
           type="number"
-          name="ompNumber"
-          id="ompNumberFilter" // Added ID for accessibility
+          name="policyNumber"
+          id="policyNumberFilter" // Added ID for accessibility
           placeholder="Search OMP No."
-          value={filters.ompNumber}
+          value={filters.policyNumber}
           onChange={(e) =>
-            setFilters((prev) => ({ ...prev, ompNumber: e.target.value }))
+            setFilters((prev) => ({ ...prev, policyNumber: e.target.value }))
           }
           className="border border-gray-300 px-4 py-2 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 col-span-3 sm:col-span-1 md:col-span-3"
         />
@@ -233,19 +234,16 @@ function OMPList() {
                       {item.id}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-800">
-                      {item.ompNumber}
+                      {item.policyNumber}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-800">
-                      {item.policyNumber}
+                      {item.policyNo}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-800">
                       {item.mobile}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-800">
-                      BDT{" "}
-                      {formatNumberToComma(
-                        Number(item.premium) + Number(item.vat)
-                      )}
+                      BDT {formatNumberToComma(Number(item.total))}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
                       <Link

@@ -6,65 +6,19 @@ import { useAuth } from "../../context/AuthContext";
 import moment from "moment";
 import config from "../../utility/config";
 import { toast } from "react-toastify";
+import SearchModal from "./SearchModal";
 
 // Dropdown data and VAT percentage are constant, so define them outside the component
 // to prevent re-creation on every render.
 const dropdownData = {
-  issuingOffice: [{ id: "DZO", value: "Dhaka Zonal Office" }],
-  classOfInsurance: [
+  mrOffice: [{ id: "DZO", value: "Dhaka Zonal Office" }],
+  mrClass: [
     { id: "MC", value: "Marine Cargo" },
     { id: "MISC/OMP", value: "Miscellaneous" },
   ],
-  coIns: [{ id: "1", value: "Co-Ins" }],
-  typeOfTRV: [
-    {
-      id: "CZ1",
-      value:
-        "Plan A : Zone 1 Students & Accompanying Spouse (Worldwide Including USA, CANADA)",
-      limit: 100000,
-    },
-    {
-      id: "CZ2",
-      value:
-        "Plan A : Zone 2 Students & Accompanying Spouse (Worldwide Excluding USA, CANADA)",
-      limit: 50000,
-    },
-    {
-      id: "DZ1",
-      value:
-        "Plan B : Zone 1 Students & Accompanying Spouse (Worldwide Including USA, CANADA)",
-      limit: 150000,
-    },
-    {
-      id: "DZ2",
-      value:
-        "Plan B : Zone 2 Students & Accompanying Spouse (Worldwide Excluding USA, CANADA)",
-      limit: 75000,
-    },
-    {
-      id: "AZ1",
-      value: "Plan A : Zone 1 Worldwide Including USA, CANADA",
-      limit: 100000,
-    },
-    {
-      id: "AZ2",
-      value: "Plan A : Zone 2 Worldwide Excluding USA, CANADA",
-      limit: 50000,
-    },
-    {
-      id: "BZ1",
-      value: "Plan B : Zone 1 Worldwide Including USA, CANADA",
-      limit: 150000,
-    },
-    {
-      id: "BZ2",
-      value: "Plan B : Zone 2 Worldwide Excluding USA, CANADA",
-      limit: 75000,
-    },
-  ],
-  gender: [
-    { id: 1, value: "Male" },
-    { id: 2, value: "Female" },
+  coins: [
+    { id: 0, value: "N/A" },
+    { id: 1, value: "Co-Ins" },
   ],
   currency: [
     { id: 1, value: "US$" },
@@ -80,7 +34,7 @@ const dropdownData = {
     { id: 6, value: "Credit Advice" },
     { id: 7, value: "Bank Guarantee" },
   ],
-  vatPercentage: 30, // Renamed for clarity
+  vatPercentage: 30,
 };
 
 export default function MRForm() {
@@ -89,40 +43,41 @@ export default function MRForm() {
   const navigate = useNavigate();
 
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false); // New loading state
+  const [loading, setLoading] = useState(false);
   const [data, setData] = useState({
-    typeOfTRV: "",
-    planCode: "",
-    ompNumber: "",
-    policyNumber: "",
-    issueDate: moment().format("YYYY-MM-DD"), // Use moment directly for default
-    firstName: "",
-    lastName: "",
-    dob: "",
-    gender: "",
-    address: "",
-    mobile: "",
-    email: "",
-    passport: "",
-    destination: "",
-    travelDateFrom: moment().format("YYYY-MM-DD"),
-    travelDays: "",
-    travelDateTo: "",
-    countryOfResidence: "Bangladesh",
-    limitOfCover: "",
-    currency: "",
-    premium: "",
-    vat: 0, // Initialize vat as 0
-    producer: "Md. Imran Rouf",
-    mrNo: "",
+    mrOffice: "",
+    mrOfficeCode: "",
+    mrClass: "",
+    mrClassCode: "",
+    mrNumber: "",
     mrDate: "",
+    mrNo: "",
+    receivedFrom: "",
     mop: "",
     chequeNo: "",
     chequeDate: "",
     bank: "",
     bankBranch: "",
+
+    policyOffice: "",
+    policyOfficeCode: "",
+    policyClass: "",
+    policyClassCode: "",
+    policyNumber: "",
+    policyDate: "",
+    coins: "",
+    policyNo: "",
+
+    premium: "",
+    stamp: "",
+    coinsnet: "",
+    vat: "",
+    total: "",
+
     note: "",
   });
+
+  // console.log(data);
 
   // Effect to set document title and fetch data for edit mode
   useEffect(() => {
@@ -131,23 +86,14 @@ export default function MRForm() {
     const fetchDataById = async () => {
       try {
         setLoading(true); // Set loading true
-        const res = await axios.get(`${config.apiUrl}/omp/${params.id}`);
+        const res = await axios.get(`${config.apiUrl}/mr/${params.id}`);
 
         // Ensure all date fields are correctly formatted to YYYY-MM-DD for input type="date"
         const transformedData = {
           ...res.data,
-          issueDate: moment(res.data.issueDate).format("YYYY-MM-DD"),
-          travelDateFrom: moment(res.data.travelDateFrom).format("YYYY-MM-DD"),
-          travelDateTo: res.data.travelDateTo
-            ? moment(res.data.travelDateTo).format("YYYY-MM-DD")
-            : "",
-          dob: res.data.dob ? moment(res.data.dob).format("YYYY-MM-DD") : "",
-          mrDate: res.data.mrDate
-            ? moment(res.data.mrDate).format("YYYY-MM-DD")
-            : "",
-          chequeDate: res.data.chequeDate
-            ? moment(res.data.chequeDate).format("YYYY-MM-DD")
-            : "",
+          mrDate: moment(res.data.mrDate).format("YYYY-MM-DD"),
+          chequeDate: moment(res.data.chequeDate).format("YYYY-MM-DD"),
+          policyDate: moment(res.data.policyDate).format("YYYY-MM-DD"),
         };
 
         setData((prev) => ({ ...prev, ...transformedData }));
@@ -163,7 +109,7 @@ export default function MRForm() {
     }
 
     // Focus on the first input field on component mount
-    document.getElementById("issuingOffice").focus();
+    document.getElementById("mrOffice").focus();
   }, [params.id]); // Added params.id to dependency array
 
   // Effect to handle error toasts
@@ -187,37 +133,66 @@ export default function MRForm() {
 
     // Specific logic for different fields
     switch (name) {
-      case "typeOfTRV": {
-        const foundType = dropdownData.typeOfTRV.find(
+      case "mrOffice": {
+        const foundOffice = dropdownData.mrOffice.find(
           (item) => item.value === value
         );
-        if (foundType) {
+        if (foundOffice) {
           newData = {
             ...newData,
-            typeOfTRV: value,
-            planCode: foundType.id,
-            limitOfCover: foundType.limit, // Update limit of cover
+            mrOffice: value,
+            mrOfficeCode: foundOffice.id,
+            policyOffice: value,
+            policyOfficeCode: foundOffice.id,
           };
         }
         break;
       }
-      case "ompNumber": {
-        // Ensure ompNumber is a number and within range
+      case "mrClass": {
+        const foundClass = dropdownData.mrClass.find(
+          (item) => item.value === value
+        );
+        if (foundClass) {
+          newData = {
+            ...newData,
+            mrClass: value,
+            mrClassCode: foundClass.id,
+            policyClass: value,
+            policyClassCode: foundClass.id,
+          };
+        }
+        break;
+      }
+      case "policyNumber": {
+        // Ensure policyNumber is a number and within range
 
         const numOmp = parseInt(value, 10);
         if (!isNaN(numOmp) && numOmp >= 1 && numOmp <= 9999) {
           const strOmp = String(numOmp);
-          newData.ompNumber = strOmp;
+          newData.policyNumber = strOmp;
         } else if (value === "") {
           // Allow clearing the field
-          newData.ompNumber = "";
+          newData.policyNumber = "";
         } else {
           return; // Prevent setting invalid number
         }
         break;
       }
-      case "firstName":
-      case "lastName":
+      case "mrNumber": {
+        // Ensure mrNumber is a number and within range
+
+        const numOmp = parseInt(value, 10);
+        if (!isNaN(numOmp) && numOmp >= 1 && numOmp <= 9999) {
+          const strOmp = String(numOmp);
+          newData.mrNumber = strOmp;
+        } else if (value === "") {
+          // Allow clearing the field
+          newData.mrNumber = "";
+        } else {
+          return; // Prevent setting invalid number
+        }
+        break;
+      }
       case "bank":
       case "bankBranch":
         // Allow letters, spaces, dot, comma for specific text fields
@@ -225,48 +200,17 @@ export default function MRForm() {
           return; // Do not update state if invalid characters
         }
         break;
-      case "mobile":
-        // Basic mobile number validation (length and starts with 01)
-        if (!/^\d*$/.test(value) || value.length > 11) {
-          return; // Prevent setting invalid characters or exceeding length
-        }
-        break;
-      case "travelDays": {
-        // Ensure travelDays is a number and within range
-        const numDays = parseInt(value, 10);
-        if (!isNaN(numDays) && numDays >= 1 && numDays <= 120) {
-          newData.travelDays = numDays;
+      case "premium":
+      case "vat":
+      case "stamp":
+      case "coinsnet": {
+        // Ensure number
+        const num = parseFloat(value);
+        if (!isNaN(num)) {
+          newData[name] = num;
         } else if (value === "") {
           // Allow clearing the field
-          newData.travelDays = "";
-        } else {
-          return; // Prevent setting invalid number
-        }
-        break;
-      }
-      case "premium": {
-        // Ensure premium is a number
-        const numPremium = parseFloat(value);
-        if (!isNaN(numPremium)) {
-          newData.premium = numPremium;
-          newData.vat = (numPremium * dropdownData.vatPercentage) / 100;
-        } else if (value === "") {
-          // Allow clearing the field
-          newData.premium = "";
-          newData.vat = 0;
-        } else {
-          return; // Prevent setting invalid number
-        }
-        break;
-      }
-      case "limitOfCover": {
-        // Ensure limitOfCover is a number
-        const numLimit = parseInt(value, 10);
-        if (!isNaN(numLimit) && numLimit >= 1) {
-          newData.limitOfCover = numLimit;
-        } else if (value === "") {
-          // Allow clearing the field
-          newData.limitOfCover = "";
+          newData[name] = "";
         } else {
           return; // Prevent setting invalid number
         }
@@ -277,36 +221,68 @@ export default function MRForm() {
     setData(newData);
   };
 
-  // Effect to calculate policyNumber
+  // Effect to calculate policyNo
   useEffect(() => {
-    if (data.ompNumber && data.issueDate) {
-      const formattedIssueDate = moment(data.issueDate).format("/MM/YYYY");
+    if (
+      data.policyNumber &&
+      data.policyDate &&
+      data.policyOfficeCode &&
+      data.policyClassCode &&
+      data.coins
+    ) {
+      const formattedPolicyDate = moment(data.policyDate).format("/MM/YYYY");
+      const coInsAvailable = data.coins === "Co-Ins" ? `-(${data.coins})` : "";
       setData((prev) => ({
         ...prev,
-        policyNumber: `BGIC/DZO/MISC/OMP-${prev.ompNumber}${formattedIssueDate}`,
+        policyNo: `BGIC/${prev.policyOfficeCode}/${prev.policyClassCode}-${prev.policyNumber}${formattedPolicyDate}${coInsAvailable}`,
       }));
     } else {
-      setData((prev) => ({ ...prev, policyNumber: "" }));
+      setData((prev) => ({ ...prev, policyNo: "" }));
     }
-  }, [data.ompNumber, data.issueDate]);
 
-  // Effect to calculate travelDateTo based on travelDateFrom and travelDays
+    if (data.policyClassCode !== "MC") {
+      setData((prev) => ({ ...prev, stamp: 0 }));
+    }
+    if (data.policyClassCode !== "MISC/OMP") {
+      setData((prev) => ({ ...prev, vat: 0 }));
+    }
+    if (data.coins !== "Co-Ins") {
+      setData((prev) => ({ ...prev, coinsnet: 0 }));
+    }
+  }, [
+    data.policyNumber,
+    data.policyDate,
+    data.policyOfficeCode,
+    data.policyClassCode,
+    data.coins,
+  ]);
+
+  // Effect to calculate mrNo
   useEffect(() => {
-    const calculateTravelDateTo = (startDate, days) => {
-      const travelDaysNum = parseInt(days, 10);
-      if (!startDate || isNaN(travelDaysNum) || travelDaysNum <= 0) return "";
+    if (data.mrNumber && data.mrDate && data.mrOfficeCode) {
+      setData((prev) => ({
+        ...prev,
+        mrNo: `${prev.mrOfficeCode}-${moment(prev.mrDate).year()}-${
+          prev.mrNumber
+        }`,
+      }));
+    } else {
+      setData((prev) => ({ ...prev, mrNo: "" }));
+    }
+  }, [data.mrNumber, data.mrDate, data.mrOfficeCode]);
 
-      // Inclusive: Add (days - 1)
-      return moment(startDate)
-        .add(travelDaysNum - 1, "days")
-        .format("YYYY-MM-DD");
-    };
+  // Effect to calculate premium
+  useEffect(() => {
+    const premium = Number(data.premium) || 0;
+    const vat = Number(data.vat) || 0;
+    const stamp = Number(data.stamp) || 0;
+    const coinsnet = Number(data.coinsnet) || 0;
 
     setData((prev) => ({
       ...prev,
-      travelDateTo: calculateTravelDateTo(prev.travelDateFrom, prev.travelDays),
+      total: premium + vat + stamp + coinsnet,
     }));
-  }, [data.travelDateFrom, data.travelDays]);
+  }, [data.premium, data.vat, data.stamp, data.coinsnet]);
 
   // handleKeyDown function for improved form navigation
   const handleKeyDown = (e, nextId) => {
@@ -339,6 +315,30 @@ export default function MRForm() {
     }
   };
 
+  // Search Policy
+  const handleSelectedItem = (item) => {
+    console.log("Selected:", item);
+
+    setData((prev) => ({
+      ...prev,
+      mrOffice: item.policyOffice,
+      mrOfficeCode: item.policyOfficeCode,
+      policyOffice: item.policyOffice,
+      policyOfficeCode: item.policyOfficeCode,
+      mrClass: item.policyClass,
+      mrClassCode: item.policyClassCode,
+      policyClass: item.policyClass,
+      policyClassCode: item.policyClassCode,
+      policyNumber: item.policyNumber,
+      policyDate: moment(item.policyDate).format("YYYY-MM-DD"),
+      policyNo: item.policyNo,
+      premium: item.premium,
+      vat: item.vat,
+      total: item.total,
+      coins: "N/A",
+    }));
+  };
+
   // SUBMIT SUBMIT SUBMIT SUBMIT SUBMIT
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -346,47 +346,28 @@ export default function MRForm() {
     setLoading(true); // Set loading true on submit
 
     // Client-side validation before API call
+
     if (
-      !data.typeOfTRV ||
-      !data.ompNumber ||
-      !data.issueDate ||
-      !data.firstName ||
-      !data.lastName ||
-      !data.dob ||
-      !data.gender ||
-      !data.address ||
-      !data.mobile ||
-      !data.email ||
-      !data.passport ||
-      !data.destination ||
-      !data.travelDays ||
-      !data.travelDateFrom ||
-      !data.limitOfCover ||
-      !data.currency ||
-      !data.premium ||
-      !data.mrNo ||
+      !data.mrNumber ||
       !data.mrDate ||
-      !data.mop ||
-      !data.chequeNo ||
-      !data.chequeDate ||
-      !data.bank ||
-      !data.bankBranch
+      !data.mrNo ||
+      !data.mrOffice ||
+      !data.mrOfficeCode ||
+      !data.mrClass ||
+      !data.mrClassCode ||
+      !data.receivedFrom ||
+      !data.policyOffice ||
+      !data.policyOfficeCode ||
+      !data.policyClass ||
+      !data.policyClassCode ||
+      !data.policyNumber ||
+      !data.policyDate ||
+      !data.coins ||
+      !data.policyNo ||
+      !data.premium ||
+      !data.mop
     ) {
       setError("Please fill in all required fields.");
-      setLoading(false);
-      return;
-    }
-
-    // Validate mobile number format
-    if (!/^01[0-9]{9}$/.test(data.mobile)) {
-      setError("Mobile number must start with '01' and be 11 digits long.");
-      setLoading(false);
-      return;
-    }
-
-    // Validate email format
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
-      setError("Please enter a valid email address.");
       setLoading(false);
       return;
     }
@@ -404,7 +385,7 @@ export default function MRForm() {
       if (params.id) {
         // Edit
         await axios.patch(
-          `${config.apiUrl}/omp/${trimmedData.id}`,
+          `${config.apiUrl}/mr/${trimmedData.id}`,
           trimmedData,
           {
             // Use trimmedData for patch
@@ -415,13 +396,13 @@ export default function MRForm() {
         toast.success(
           <div>
             <p className="font-bold">MR Updated.</p>
-            <p>{trimmedData.policyNumber}</p>
+            <p>{trimmedData.mrNo}</p>
           </div>
         );
         navigate(`/mr/${trimmedData.id}`, { replace: true });
       } else {
         // Create
-        await axios.post(`${config.apiUrl}/omp`, trimmedData, {
+        await axios.post(`${config.apiUrl}/mr`, trimmedData, {
           // Use trimmedData for post
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -429,7 +410,7 @@ export default function MRForm() {
         toast.success(
           <div>
             <p className="font-bold">MR Created.</p>
-            <p>{trimmedData.policyNumber}</p>
+            <p>{trimmedData.mrNo}</p>
           </div>
         );
         navigate("/mr", { replace: true });
@@ -447,6 +428,11 @@ export default function MRForm() {
       {/* Added padding for better mobile view */}
       <h1 className="text-4xl font-bold mb-6 text-blue-950">
         {params.id ? "Update MR" : "Create New MR"}
+        {params.id ? (
+          ""
+        ) : (
+          <SearchModal onSelect={handleSelectedItem} token={token} />
+        )}
       </h1>
       <form
         className=" grid grid-cols-1 gap-6 w-full  bg-white p-8 rounded-lg shadow-2xl" // Max width and shadow for better presentation
@@ -457,25 +443,25 @@ export default function MRForm() {
           {/* Issuing Office = Dropdown */}
           <div className="sm:col-span-1">
             <label
-              htmlFor="issuingOffice"
+              htmlFor="mrOffice"
               className="block mb-1 font-medium text-gray-700"
             >
               Issuing Office
             </label>
             <select
-              name="issuingOffice"
-              value={data.issuingOffice ?? ""}
+              name="mrOffice"
+              value={data.mrOffice ?? ""}
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              id="issuingOffice"
+              id="mrOffice"
               tabIndex={1}
-              onKeyDown={(e) => handleKeyDown(e, "classOfInsurance")}
+              onKeyDown={(e) => handleKeyDown(e, "mrClass")}
             >
               <option value="" disabled>
                 Select Office
               </option>
-              {dropdownData.issuingOffice.map((item) => (
+              {dropdownData.mrOffice.map((item) => (
                 <option key={item.id} value={item.value}>
                   {item.value}
                 </option>
@@ -486,25 +472,25 @@ export default function MRForm() {
           {/* Class of Insurance = Dropdown */}
           <div className="sm:col-span-1">
             <label
-              htmlFor="classOfInsurance"
+              htmlFor="mrClass"
               className="block mb-1 font-medium text-gray-700"
             >
               Class of Insurance
             </label>
             <select
-              name="classOfInsurance"
-              value={data.classOfInsurance ?? ""}
+              name="mrClass"
+              value={data.mrClass ?? ""}
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              id="classOfInsurance"
+              id="mrClass"
               tabIndex={1}
-              onKeyDown={(e) => handleKeyDown(e, "mrId")}
+              onKeyDown={(e) => handleKeyDown(e, "policyNumber")}
             >
               <option value="" disabled>
                 Select Class
               </option>
-              {dropdownData.classOfInsurance.map((item) => (
+              {dropdownData.mrClass.map((item) => (
                 <option key={item.id} value={item.value}>
                   {item.value}
                 </option>
@@ -517,39 +503,39 @@ export default function MRForm() {
 
         {/* Issued Against */}
         <div className="grid sm:grid-cols-3 gap-4">
-          {/* Issued Against (Read-only) */}
+          {/* POlicy No. > Issued Against (Read-only) */}
           <div className="sm:col-span-3">
             <label
-              htmlFor="mrNo"
+              htmlFor="policyNo"
               className="block mb-1 font-medium text-gray-700"
             >
               Issued Against: Policy No
             </label>
             <input
               type="text"
-              name="mrNo"
-              value={data.mrNo ?? ""}
+              name="policyNo"
+              value={data.policyNo ?? ""}
               className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-300 text-gray-700 cursor-not-allowed"
               readOnly
               disabled
               placeholder="Auto-generated Policy No"
-              id="mrNo" // Added ID for consistency
+              id="policyNo" // Added ID for consistency
             />
           </div>
 
-          {/* Policy Id. */}
+          {/* Policy Number > Issued Against */}
           <div className="sm:col-span-1">
             <label
-              htmlFor="mrId"
+              htmlFor="policyNumber"
               className="block mb-1 font-medium text-gray-700"
             >
-              Policy ID
+              Policy Number
             </label>
             <input
               type="number"
-              name="mrId"
+              name="policyNumber"
               onChange={handleChange}
-              value={data.mrId ?? ""}
+              value={data.policyNumber ?? ""}
               min={1}
               max={9999}
               required
@@ -557,54 +543,56 @@ export default function MRForm() {
               placeholder="Enter Policy ID"
               tabIndex={2}
               onWheel={(e) => e.target.blur()} // Prevents number input from changing on scroll
-              id="mrId"
-              onKeyDown={(e) => handleKeyDown(e, "mrDate")}
+              id="policyNumber"
+              onKeyDown={(e) => handleKeyDown(e, "policyDate")}
             />
           </div>
 
           {/* Policy Date > Issued Against */}
           <div className="sm:col-span-1">
             <label
-              htmlFor="mrDate"
+              htmlFor="policyDate"
               className="block mb-1 font-medium text-gray-700"
             >
               Policy Date
             </label>
             <input
               type="date"
-              name="mrDate"
-              value={data.mrDate}
+              name="policyDate"
+              value={data.policyDate}
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
               tabIndex={3}
               min="2000-01-01"
               title="Date format: MM/DD/YYYY. Example: 12/31/2022"
-              id="mrDate"
-              onKeyDown={(e) => handleKeyDown(e, "Adfghjsdfghjkdsfgfdhdfg")}
+              id="policyDate"
+              onKeyDown={(e) => handleKeyDown(e, "coins")}
             />
           </div>
 
-          {/* Co-Ins = Dropdown */}
+          {/* Co-Ins > Issued Against > Dropdown */}
           <div className="sm:col-span-1">
             <label
-              htmlFor="classOfInsurance"
+              htmlFor="coins"
               className="block mb-1 font-medium text-gray-700"
             >
               Co-Ins
             </label>
             <select
-              name="classOfInsurance"
-              value={data.classOfInsurance ?? ""}
+              name="coins"
+              value={data.coins ?? ""}
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              id="classOfInsurance"
+              id="coins"
               tabIndex={1}
-              onKeyDown={(e) => handleKeyDown(e, "mrId")}
+              onKeyDown={(e) => handleKeyDown(e, "mrNumber")}
             >
-              <option value="">No</option>
-              {dropdownData.coIns.map((item) => (
+              <option value="" disabled>
+                Select Co Ins
+              </option>
+              {dropdownData.coins.map((item) => (
                 <option key={item.id} value={item.value}>
                   {item.value}
                 </option>
@@ -617,19 +605,19 @@ export default function MRForm() {
 
         {/* MR No. Section */}
         <div className="grid sm:grid-cols-4 gap-4">
-          {/* MR Id. */}
+          {/* MR Number. */}
           <div className="sm:col-span-1">
             <label
-              htmlFor="mrId"
+              htmlFor="mrNumber"
               className="block mb-1 font-medium text-gray-700"
             >
-              MR ID
+              MR Number
             </label>
             <input
               type="number"
-              name="mrId"
+              name="mrNumber"
               onChange={handleChange}
-              value={data.mrId ?? ""}
+              value={data.mrNumber ?? ""}
               min={1}
               max={9999}
               required
@@ -637,7 +625,7 @@ export default function MRForm() {
               placeholder="Enter MR ID"
               tabIndex={2}
               onWheel={(e) => e.target.blur()} // Prevents number input from changing on scroll
-              id="mrId"
+              id="mrNumber"
               onKeyDown={(e) => handleKeyDown(e, "mrDate")}
             />
           </div>
@@ -661,7 +649,7 @@ export default function MRForm() {
               min="2000-01-01"
               title="Date format: MM/DD/YYYY. Example: 12/31/2022"
               id="mrDate"
-              onKeyDown={(e) => handleKeyDown(e, "Adfghjsdfghjkdsfgfdhdfg")}
+              onKeyDown={(e) => handleKeyDown(e, "receivedFrom")}
             />
           </div>
 
@@ -691,7 +679,7 @@ export default function MRForm() {
         {/* Received From*/}
         <div>
           <label
-            htmlFor="destination"
+            htmlFor="receivedFrom"
             className="block mb-1 font-medium text-gray-700"
           >
             Received From
@@ -700,75 +688,21 @@ export default function MRForm() {
             type="text"
             required
             className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-            value={data.destination ?? ""}
+            value={data.receivedFrom ?? ""}
             onChange={handleChange}
-            name="destination"
+            name="receivedFrom"
             placeholder="Received with thanks from"
             title="Received with thanks from"
             tabIndex={12}
-            id="destination"
-            onKeyDown={(e) => handleKeyDown(e, "travelDays")}
+            id="receivedFrom"
+            onKeyDown={(e) => handleKeyDown(e, "premium")}
           />
         </div>
 
         <hr className="border-gray-300" />
 
-        {/* Premium & MOP */}
-        <div className="grid sm:grid-cols-4 gap-4 items-end">
-          {/* Limit Of Cover */}
-          {/* <div className="sm:col-span-2">
-            <label
-              htmlFor="limitOfCover"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              Limit Of Cover
-            </label>
-            <input
-              type="number"
-              name="limitOfCover"
-              min={1}
-              onChange={handleChange}
-              required
-              value={data.limitOfCover ?? ""}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              placeholder="Enter Limit Of Cover"
-              title="Enter Limit Of Cover Amount"
-              tabIndex={15}
-              onWheel={(e) => e.target.blur()}
-              id="limitOfCover"
-              onKeyDown={(e) => handleKeyDown(e, "currency")}
-            />
-          </div> */}
-
-          {/* Currency */}
-          {/* <div className="sm:col-span-2">
-            <label
-              htmlFor="currency"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              Currency
-            </label>
-            <select
-              name="currency"
-              value={data.currency ?? ""}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              tabIndex={16}
-              id="currency"
-              onKeyDown={(e) => handleKeyDown(e, "premium")}
-            >
-              <option value="" disabled>
-                Select Currency
-              </option>
-              {dropdownData.currency.map((item) => (
-                <option key={item.id} value={item.value}>
-                  {item.value}
-                </option>
-              ))}
-            </select>
-          </div> */}
-
+        {/* Premium*/}
+        <div className="grid sm:grid-cols-3 gap-4 items-end">
           {/* Premium */}
           <div className="sm:col-span-1">
             <label
@@ -779,6 +713,7 @@ export default function MRForm() {
             </label>
             <input
               type="number"
+              step="0.01"
               name="premium"
               required
               min={1}
@@ -805,13 +740,19 @@ export default function MRForm() {
             </label>
             <input
               type="number"
+              step="0.01"
               name="stamp"
+              readOnly={data.mrClassCode !== "MC"}
               required
               min={1}
               inputMode="numeric"
               value={data.stamp ?? ""}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+              className={
+                data.mrClassCode !== "MC"
+                  ? "w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-300 text-gray-700 cursor-not-allowed"
+                  : "w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+              }
               placeholder="Enter Stamp Amount"
               title="Enter Stamp Amount"
               tabIndex={17}
@@ -831,23 +772,29 @@ export default function MRForm() {
             </label>
             <input
               type="number"
+              step="0.01"
               name="coinsnet"
+              readOnly={data.coins !== "Co-Ins"}
               required
               min={1}
               inputMode="numeric"
               value={data.coinsnet ?? ""}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+              className={
+                data.coins !== "Co-Ins"
+                  ? "w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-300 text-gray-700 cursor-not-allowed"
+                  : "w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+              }
               placeholder="Enter CoIns(net) Amount"
               title="Enter CoIns(net) Amount"
               tabIndex={17}
               onWheel={(e) => e.target.blur()}
               id="coinsnet"
-              onKeyDown={(e) => handleKeyDown(e, "mrNo")}
+              onKeyDown={(e) => handleKeyDown(e, "vat")}
             />
           </div>
 
-          {/* Vat (Read-only) */}
+          {/* Vat */}
           <div className="sm:col-span-1">
             <label
               htmlFor="vat"
@@ -856,13 +803,26 @@ export default function MRForm() {
               Vat
             </label>
             <input
-              type="text"
+              type="number"
+              step="0.01"
+              name="vat"
+              readOnly={data.mrClassCode !== "MISC/OMP"}
+              required
+              min={1}
               inputMode="numeric"
-              value={Number(data.vat).toFixed(2)} // Format to 2 decimal places
-              readOnly
-              disabled
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-300 text-gray-700 cursor-not-allowed"
-              id="vat" // Added ID for consistency
+              value={data.vat ?? ""}
+              onChange={handleChange}
+              className={
+                data.mrClassCode !== "MISC/OMP"
+                  ? "w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-300 text-gray-700 cursor-not-allowed"
+                  : "w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+              }
+              placeholder="Enter Vat Amount"
+              title="Enter Vat Amount"
+              tabIndex={17}
+              onWheel={(e) => e.target.blur()}
+              id="vat"
+              onKeyDown={(e) => handleKeyDown(e, "mop")}
             />
           </div>
 
@@ -877,7 +837,7 @@ export default function MRForm() {
             <input
               type="text"
               inputMode="numeric"
-              value={(Number(data.premium) + Number(data.vat)).toFixed(2)} // Calculate and format
+              value={Number(data.total).toFixed(2)} // Calculate and format
               readOnly
               disabled
               className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-300 text-gray-700 cursor-not-allowed"
@@ -955,7 +915,8 @@ export default function MRForm() {
               name="chequeDate"
               value={data.chequeDate}
               onChange={handleChange}
-              required={data.mop === "Cheque"} // Make required only if MOP is Cheque
+              // required={data.mop === "Cheque"} // Make required only if MOP is Cheque
+              required
               className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
               tabIndex={22}
               min="2000-01-01"
@@ -998,7 +959,7 @@ export default function MRForm() {
             <input
               type="text"
               name="bankBranch"
-              required={data.mop === "Cheque"} // Make required only if MOP is Cheque
+              // required={data.mop === "Cheque"} // Make required only if MOP is Cheque
               value={data.bankBranch ?? ""}
               onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"

@@ -1,4 +1,4 @@
-// src/pages/OMP/OMPForm.jsx
+// src/pages/OMP/OMPForm2.jsx
 import axios from "axios";
 import { useEffect, useState } from "react"; // Removed useRef as it's no longer needed
 import { useNavigate, useParams } from "react-router-dom";
@@ -10,7 +10,7 @@ import { toast } from "react-toastify";
 // Dropdown data and VAT percentage are constant, so define them outside the component
 // to prevent re-creation on every render.
 const dropdownData = {
-  plan: [
+  typeOfTRV: [
     {
       id: "CZ1",
       value:
@@ -65,27 +65,30 @@ const dropdownData = {
     { id: 2, value: "EURO" },
     { id: 3, value: "TK" },
   ],
-  vatPercentage: 30,
+  mop: [
+    { id: 1, value: "Cash" },
+    { id: 2, value: "Cheque" },
+    { id: 3, value: "D.D" },
+    { id: 4, value: "T.T" },
+    { id: 5, value: "Pay Order" },
+    { id: 6, value: "Credit Advice" },
+  ],
+  vatPercentage: 30, // Renamed for clarity
 };
 
-export default function OMPForm() {
+export default function OMPForm2() {
   const params = useParams();
   const { token } = useAuth();
   const navigate = useNavigate();
 
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // New loading state
   const [data, setData] = useState({
-    plan: "",
+    typeOfTRV: "",
     planCode: "",
-    policyOffice: "Dhaka Zonal Office",
-    policyOfficeCode: "DZO",
-    policyClass: "Miscellaneous",
-    policyClassCode: "MISC/OMP",
+    ompNumber: "",
     policyNumber: "",
-    policyDate: moment().format("YYYY-MM-DD"), // Use moment directly for default
-    policyNo: "",
-
+    issueDate: moment().format("YYYY-MM-DD"), // Use moment directly for default
     firstName: "",
     lastName: "",
     dob: "",
@@ -94,7 +97,6 @@ export default function OMPForm() {
     mobile: "",
     email: "",
     passport: "",
-
     destination: "",
     travelDateFrom: moment().format("YYYY-MM-DD"),
     travelDays: "",
@@ -103,8 +105,16 @@ export default function OMPForm() {
     limitOfCover: "",
     currency: "",
     premium: "",
-    vat: "",
-    total: 0,
+    vat: 0, // Initialize vat as 0
+    producer: "Md. Imran Rouf",
+    mrNo: "",
+    mrDate: "",
+    mop: "",
+    chequeNo: "",
+    chequeDate: "",
+    bank: "",
+    bankBranch: "",
+    note: "",
   });
 
   // Calculate age based on DOB
@@ -124,12 +134,18 @@ export default function OMPForm() {
         // Ensure all date fields are correctly formatted to YYYY-MM-DD for input type="date"
         const transformedData = {
           ...res.data,
-          policyDate: moment(res.data.policyDate).format("YYYY-MM-DD"),
+          issueDate: moment(res.data.issueDate).format("YYYY-MM-DD"),
           travelDateFrom: moment(res.data.travelDateFrom).format("YYYY-MM-DD"),
           travelDateTo: res.data.travelDateTo
             ? moment(res.data.travelDateTo).format("YYYY-MM-DD")
             : "",
           dob: res.data.dob ? moment(res.data.dob).format("YYYY-MM-DD") : "",
+          mrDate: res.data.mrDate
+            ? moment(res.data.mrDate).format("YYYY-MM-DD")
+            : "",
+          chequeDate: res.data.chequeDate
+            ? moment(res.data.chequeDate).format("YYYY-MM-DD")
+            : "",
         };
 
         setData((prev) => ({ ...prev, ...transformedData }));
@@ -145,7 +161,7 @@ export default function OMPForm() {
     }
 
     // Focus on the first input field on component mount
-    document.getElementById("plan").focus();
+    document.getElementById("typeOfTRV").focus();
   }, [params.id]); // Added params.id to dependency array
 
   // Effect to handle error toasts
@@ -169,30 +185,30 @@ export default function OMPForm() {
 
     // Specific logic for different fields
     switch (name) {
-      case "plan": {
-        const foundType = dropdownData.plan.find(
+      case "typeOfTRV": {
+        const foundType = dropdownData.typeOfTRV.find(
           (item) => item.value === value
         );
         if (foundType) {
           newData = {
             ...newData,
-            plan: value,
+            typeOfTRV: value,
             planCode: foundType.id,
             limitOfCover: foundType.limit, // Update limit of cover
           };
         }
         break;
       }
-      case "policyNumber": {
-        // Ensure policyNumber is a number and within range
+      case "ompNumber": {
+        // Ensure ompNumber is a number and within range
 
         const numOmp = parseInt(value, 10);
         if (!isNaN(numOmp) && numOmp >= 1 && numOmp <= 9999) {
           const strOmp = String(numOmp);
-          newData.policyNumber = strOmp;
+          newData.ompNumber = strOmp;
         } else if (value === "") {
           // Allow clearing the field
-          newData.policyNumber = "";
+          newData.ompNumber = "";
         } else {
           return; // Prevent setting invalid number
         }
@@ -226,15 +242,16 @@ export default function OMPForm() {
         }
         break;
       }
-      case "premium":
-      case "vat": {
-        // Ensure number
-        const num = parseFloat(value);
-        if (!isNaN(num)) {
-          newData[name] = num;
+      case "premium": {
+        // Ensure premium is a number
+        const numPremium = parseFloat(value);
+        if (!isNaN(numPremium)) {
+          newData.premium = numPremium;
+          newData.vat = (numPremium * dropdownData.vatPercentage) / 100;
         } else if (value === "") {
           // Allow clearing the field
-          newData[name] = "";
+          newData.premium = "";
+          newData.vat = 0;
         } else {
           return; // Prevent setting invalid number
         }
@@ -258,18 +275,18 @@ export default function OMPForm() {
     setData(newData);
   };
 
-  // Effect to calculate policyNo
+  // Effect to calculate policyNumber
   useEffect(() => {
-    if (data.policyNumber && data.policyDate) {
-      const formattedPolicyDate = moment(data.policyDate).format("/MM/YYYY");
+    if (data.ompNumber && data.issueDate) {
+      const formattedIssueDate = moment(data.issueDate).format("/MM/YYYY");
       setData((prev) => ({
         ...prev,
-        policyNo: `BGIC/${prev.policyOfficeCode}/${prev.policyClassCode}-${prev.policyNumber}${formattedPolicyDate}`,
+        policyNumber: `BGIC/DZO/MISC/OMP-${prev.ompNumber}${formattedIssueDate}`,
       }));
     } else {
-      setData((prev) => ({ ...prev, policyNo: "" }));
+      setData((prev) => ({ ...prev, policyNumber: "" }));
     }
-  }, [data.policyNumber, data.policyDate]);
+  }, [data.ompNumber, data.issueDate]);
 
   // Effect to calculate travelDateTo based on travelDateFrom and travelDays
   useEffect(() => {
@@ -288,17 +305,6 @@ export default function OMPForm() {
       travelDateTo: calculateTravelDateTo(prev.travelDateFrom, prev.travelDays),
     }));
   }, [data.travelDateFrom, data.travelDays]);
-
-  // Effect to calculate premium
-  useEffect(() => {
-    const premium = Number(data.premium) || 0;
-    const vat = Number(data.vat) || 0;
-
-    setData((prev) => ({
-      ...prev,
-      total: premium + vat,
-    }));
-  }, [data.premium, data.vat]);
 
   // handleKeyDown function for improved form navigation
   const handleKeyDown = (e, nextId) => {
@@ -339,9 +345,9 @@ export default function OMPForm() {
 
     // Client-side validation before API call
     if (
-      !data.plan ||
-      !data.policyNumber ||
-      !data.policyDate ||
+      !data.typeOfTRV ||
+      !data.ompNumber ||
+      !data.issueDate ||
       !data.firstName ||
       !data.lastName ||
       !data.dob ||
@@ -356,7 +362,13 @@ export default function OMPForm() {
       !data.limitOfCover ||
       !data.currency ||
       !data.premium ||
-      !data.vat
+      !data.mrNo ||
+      !data.mrDate ||
+      !data.mop ||
+      !data.chequeNo ||
+      !data.chequeDate ||
+      !data.bank ||
+      !data.bankBranch
     ) {
       setError("Please fill in all required fields.");
       setLoading(false);
@@ -401,7 +413,7 @@ export default function OMPForm() {
         toast.success(
           <div>
             <p className="font-bold">OMP Updated.</p>
-            <p>{trimmedData.policyNo}</p>
+            <p>{trimmedData.policyNumber}</p>
           </div>
         );
         navigate(`/omp/${trimmedData.id}`, { replace: true });
@@ -415,7 +427,7 @@ export default function OMPForm() {
         toast.success(
           <div>
             <p className="font-bold">OMP Created.</p>
-            <p>{trimmedData.policyNo}</p>
+            <p>{trimmedData.policyNumber}</p>
           </div>
         );
         navigate("/omp", { replace: true });
@@ -441,25 +453,25 @@ export default function OMPForm() {
         {/* Type of TRV = Dropdown */}
         <div>
           <label
-            htmlFor="plan"
+            htmlFor="typeOfTRV"
             className="block mb-1 font-medium text-gray-700"
           >
             Type of TRV
           </label>
           <select
-            name="plan"
-            value={data.plan ?? ""}
+            name="typeOfTRV"
+            value={data.typeOfTRV ?? ""}
             onChange={handleChange}
             required
             className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-            id="plan"
+            id="typeOfTRV"
             tabIndex={1}
-            onKeyDown={(e) => handleKeyDown(e, "policyNumber")}
+            onKeyDown={(e) => handleKeyDown(e, "ompNumber")}
           >
             <option value="" disabled>
               Select Plan
             </option>
-            {dropdownData.plan.map((item) => (
+            {dropdownData.typeOfTRV.map((item) => (
               <option key={item.id} value={item.value}>
                 {item.value}
               </option>
@@ -472,16 +484,16 @@ export default function OMPForm() {
           {/* OMP No. */}
           <div className="sm:col-span-1">
             <label
-              htmlFor="policyNumber"
+              htmlFor="ompNumber"
               className="block mb-1 font-medium text-gray-700"
             >
               OMP No.
             </label>
             <input
               type="number"
-              name="policyNumber"
+              name="ompNumber"
               onChange={handleChange}
-              value={data.policyNumber ?? ""}
+              value={data.ompNumber ?? ""}
               min={1}
               max={9999}
               required
@@ -489,30 +501,30 @@ export default function OMPForm() {
               placeholder="Enter OMP No."
               tabIndex={2}
               onWheel={(e) => e.target.blur()} // Prevents number input from changing on scroll
-              id="policyNumber"
-              onKeyDown={(e) => handleKeyDown(e, "policyDate")}
+              id="ompNumber"
+              onKeyDown={(e) => handleKeyDown(e, "issueDate")}
             />
           </div>
 
           {/* Issue Date */}
           <div className="sm:col-span-1">
             <label
-              htmlFor="policyDate"
+              htmlFor="issueDate"
               className="block mb-1 font-medium text-gray-700"
             >
               Issue Date
             </label>
             <input
               type="date"
-              name="policyDate"
-              value={data.policyDate}
+              name="issueDate"
+              value={data.issueDate}
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
               tabIndex={3}
               min="2000-01-01"
               title="Date format: MM/DD/YYYY. Example: 12/31/2022"
-              id="policyDate"
+              id="issueDate"
               onKeyDown={(e) => handleKeyDown(e, "firstName")}
             />
           </div>
@@ -520,20 +532,20 @@ export default function OMPForm() {
           {/* Policy No. (Read-only) */}
           <div className="sm:col-span-2">
             <label
-              htmlFor="policyNo"
+              htmlFor="policyNumber"
               className="block mb-1 font-medium text-gray-700"
             >
               Policy No.
             </label>
             <input
               type="text"
-              name="policyNo"
-              value={data.policyNo ?? ""}
+              name="policyNumber"
+              value={data.policyNumber ?? ""}
               className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-300 text-gray-700 cursor-not-allowed"
               readOnly
               disabled
               placeholder="Auto-generated Policy No."
-              id="policyNo" // Added ID for consistency
+              id="policyNumber" // Added ID for consistency
             />
           </div>
         </div>
@@ -838,7 +850,6 @@ export default function OMPForm() {
             </label>
             <input
               type="number"
-              step="0.01"
               name="limitOfCover"
               min={1}
               onChange={handleChange}
@@ -893,7 +904,6 @@ export default function OMPForm() {
             </label>
             <input
               type="number"
-              step="0.01"
               name="premium"
               required
               min={1}
@@ -906,34 +916,26 @@ export default function OMPForm() {
               tabIndex={17}
               onWheel={(e) => e.target.blur()}
               id="premium"
-              onKeyDown={(e) => handleKeyDown(e, "vat")}
+              onKeyDown={(e) => handleKeyDown(e, "mrNo")}
             />
           </div>
 
-          {/* Vat*/}
+          {/* Vat (Read-only) */}
           <div className="sm:col-span-1">
             <label
               htmlFor="vat"
               className="block mb-1 font-medium text-gray-700"
             >
-              vat
+              Vat
             </label>
             <input
-              type="number"
-              step="0.01"
-              name="vat"
-              required
-              min={1}
+              type="text"
               inputMode="numeric"
-              value={data.vat ?? ""}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              placeholder="Enter Vat Amount"
-              title="Enter Vat Amount"
-              tabIndex={17}
-              onWheel={(e) => e.target.blur()}
-              id="vat"
-              onKeyDown={(e) => handleKeyDown(e, "submitButton")}
+              value={Number(data.vat).toFixed(2)} // Format to 2 decimal places
+              readOnly
+              disabled
+              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-300 text-gray-700 cursor-not-allowed"
+              id="vat" // Added ID for consistency
             />
           </div>
 
@@ -948,13 +950,208 @@ export default function OMPForm() {
             <input
               type="text"
               inputMode="numeric"
-              value={Number(data.total).toFixed(2)} // Format to 2 decimal places
+              value={(Number(data.premium) + Number(data.vat)).toFixed(2)} // Calculate and format
               readOnly
               disabled
               className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-300 text-gray-700 cursor-not-allowed"
               id="total" // Added ID for consistency
             />
           </div>
+        </div>
+
+        <hr className="my-4 border-gray-300" />
+
+        {/* MR Section */}
+        <div className="grid sm:grid-cols-2 gap-4 items-end">
+          {/* Mr No. */}
+          <div className="sm:col-span-1">
+            <label
+              htmlFor="mrNo"
+              className="block mb-1 font-medium text-gray-700"
+            >
+              Mr No.
+            </label>
+            <input
+              type="number"
+              name="mrNo"
+              required
+              min={1}
+              value={data.mrNo ?? ""}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+              placeholder="Enter MR Number"
+              tabIndex={18}
+              onWheel={(e) => e.target.blur()}
+              id="mrNo"
+              onKeyDown={(e) => handleKeyDown(e, "mrDate")}
+            />
+          </div>
+
+          {/* Mr Date */}
+          <div className="sm:col-span-1">
+            <label
+              htmlFor="mrDate"
+              className="block mb-1 font-medium text-gray-700"
+            >
+              Mr Date
+            </label>
+            <input
+              type="date"
+              name="mrDate"
+              value={data.mrDate}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+              tabIndex={19}
+              min="2000-01-01"
+              title="Date format: MM/DD/YYYY. Example: 12/31/2022"
+              id="mrDate"
+              onKeyDown={(e) => handleKeyDown(e, "mop")}
+            />
+          </div>
+        </div>
+
+        {/* Bank Info */}
+        <div className="grid sm:grid-cols-2 gap-4 items-end">
+          {/* MOP */}
+          <div className="sm:col-span-1">
+            <label
+              htmlFor="mop"
+              className="block mb-1 font-medium text-gray-700"
+            >
+              MOP
+            </label>
+            <select
+              name="mop"
+              value={data.mop ?? ""}
+              onChange={handleChange}
+              title="Method Of Payment"
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+              tabIndex={20}
+              id="mop"
+              onKeyDown={(e) => handleKeyDown(e, "chequeNo")}
+            >
+              <option value="" disabled>
+                Select MOP
+              </option>
+              {dropdownData.mop.map((item) => (
+                <option key={item.id} value={item.value}>
+                  {item.value}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Cheque No. */}
+          <div className="sm:col-span-1">
+            <label
+              htmlFor="chequeNo"
+              className="block mb-1 font-medium text-gray-700"
+            >
+              Cheque No.
+            </label>
+            <input
+              type="text"
+              name="chequeNo"
+              required={data.mop === "Cheque"} // Make required only if MOP is Cheque
+              value={data.chequeNo ?? ""}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+              placeholder="Enter Cheque No."
+              tabIndex={21}
+              id="chequeNo"
+              onKeyDown={(e) => handleKeyDown(e, "chequeDate")}
+            />
+          </div>
+
+          {/* Cheque Date */}
+          <div className="sm:col-span-1">
+            <label
+              htmlFor="chequeDate"
+              className="block mb-1 font-medium text-gray-700"
+            >
+              Cheque Date
+            </label>
+            <input
+              type="date"
+              name="chequeDate"
+              value={data.chequeDate}
+              onChange={handleChange}
+              required={data.mop === "Cheque"} // Make required only if MOP is Cheque
+              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+              tabIndex={22}
+              min="2000-01-01"
+              title="Date format: MM/DD/YYYY. Example: 12/31/2022"
+              id="chequeDate"
+              onKeyDown={(e) => handleKeyDown(e, "bank")}
+            />
+          </div>
+
+          {/* Bank */}
+          <div className="sm:col-span-1">
+            <label
+              htmlFor="bank"
+              className="block mb-1 font-medium text-gray-700"
+            >
+              Bank
+            </label>
+            <input
+              type="text"
+              name="bank"
+              required={data.mop === "Cheque"} // Make required only if MOP is Cheque
+              value={data.bank ?? ""}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+              placeholder="Enter Bank Name"
+              tabIndex={23}
+              id="bank"
+              onKeyDown={(e) => handleKeyDown(e, "bankBranch")}
+            />
+          </div>
+
+          {/* Branch */}
+          <div className="sm:col-span-1">
+            <label
+              htmlFor="bankBranch"
+              className="block mb-1 font-medium text-gray-700"
+            >
+              Branch
+            </label>
+            <input
+              type="text"
+              name="bankBranch"
+              required={data.mop === "Cheque"} // Make required only if MOP is Cheque
+              value={data.bankBranch ?? ""}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+              placeholder="Enter Bank's Branch Name"
+              tabIndex={24}
+              id="bankBranch"
+              onKeyDown={(e) => handleKeyDown(e, "note")}
+            />
+          </div>
+        </div>
+
+        {/* Note */}
+        <div>
+          <label
+            htmlFor="note"
+            className="block mb-1 font-medium text-gray-700"
+          >
+            Note
+          </label>
+          <input
+            type="text"
+            name="note"
+            onChange={handleChange}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+            value={data.note ?? ""}
+            placeholder="Any additional notes..."
+            tabIndex={25}
+            id="note"
+            onKeyDown={(e) => handleKeyDown(e, "submitButton")}
+          />
         </div>
 
         <hr className="my-4 border-gray-300" />

@@ -163,7 +163,7 @@ export default function OMP() {
       toast.success(
         <div>
           <p className="font-bold">Success!</p>
-          <p>OMP {data?.ompNumber} Successfully Deleted.</p>
+          <p>OMP {data?.policyNumber} Successfully Deleted.</p>
         </div>
       );
 
@@ -224,7 +224,7 @@ export default function OMP() {
         <div className="flex flex-wrap gap-3 md:ml-auto">
           <PDFDownloadLink
             document={<OMPPdf qrImage={qrImage} data={data} />}
-            fileName={`OMP-Certificate-${data.policyNumber}.pdf`}
+            fileName={`OMP-Certificate-${data.policyNo}.pdf`}
             className="px-4 py-2 bg-orange-500 text-white font-semibold rounded-lg shadow-md hover:bg-orange-600 transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center gap-2"
           >
             {({ loading: pdfLoading }) =>
@@ -284,7 +284,7 @@ function PolicyInfo({ data }) {
       <div className="mt-4">
         <div className="flex flex-col sm:flex-row justify-between gap-2">
           <p>
-            <b>POLICY NUMBER:</b> {data.policyNumber}
+            <b>POLICY NUMBER:</b> {data.policyNo}
           </p>
           <p>
             <b>ISSUING DATE:</b> {moment(data.issueDate).format("DD/MM/YYYY")}

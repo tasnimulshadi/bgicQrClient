@@ -20,8 +20,8 @@ function MRList() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({
-    mobile: "",
-    ompNumber: "",
+    mrNumber: "",
+    policyNumber: "",
   });
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -43,17 +43,15 @@ function MRList() {
       setLoading(true);
       try {
         const query = new URLSearchParams();
-        if (filters.mobile) query.append("mobile", filters.mobile);
-        if (filters.ompNumber) query.append("ompNumber", filters.ompNumber);
+        if (filters.mrNumber) query.append("mrNumber", filters.mrNumber);
+        if (filters.policyNumber)
+          query.append("policyNumber", filters.policyNumber);
         query.append("page", currentPage);
         query.append("limit", itemsPerPage);
 
-        const res = await axios.get(
-          `${config.apiUrl}/omp?${query.toString()}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const res = await axios.get(`${config.apiUrl}/mr?${query.toString()}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
         setDataList(res.data.data);
         setTotalItems(res.data.total);
@@ -149,24 +147,24 @@ function MRList() {
         {/* Search by MR Number */}
         <input
           type="number"
-          name="ompNumber"
-          id="ompNumberFilter" // Added ID for accessibility
-          placeholder="Search MR No."
-          value={filters.ompNumber}
+          name="policyNumber"
+          id="policyNumberFilter" // Added ID for accessibility
+          placeholder="Search Policy No."
+          value={filters.policyNumber}
           onChange={(e) =>
-            setFilters((prev) => ({ ...prev, ompNumber: e.target.value }))
+            setFilters((prev) => ({ ...prev, policyNumber: e.target.value }))
           }
           className="border border-gray-300 px-4 py-2 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 col-span-3 sm:col-span-1 md:col-span-3"
         />
-        {/* Search by Mobile Number */}
+        {/* Search by mrNumber Number */}
         <input
           type="number"
-          name="mobile"
-          id="mobileFilter" // Added ID for accessibility
-          placeholder="Search Mobile"
-          value={filters.mobile}
+          name="mrNumber"
+          id="mrNumberFilter" // Added ID for accessibility
+          placeholder="Search MR No"
+          value={filters.mrNumber}
           onChange={(e) =>
-            setFilters((prev) => ({ ...prev, mobile: e.target.value }))
+            setFilters((prev) => ({ ...prev, mrNumber: e.target.value }))
           }
           className="border border-gray-300 px-4 py-2 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 col-span-3 sm:col-span-1 md:col-span-3"
         />
@@ -205,16 +203,19 @@ function MRList() {
                     ID
                   </th>
                   <th className="text-left px-4 py-3 text-sm font-semibold uppercase tracking-wider">
-                    MR Id
+                    MR Number
                   </th>
                   <th className="text-left px-4 py-3 text-sm font-semibold uppercase tracking-wider">
                     Money Receipt No
                   </th>
                   <th className="text-left px-4 py-3 text-sm font-semibold uppercase tracking-wider">
-                    Issued Against
+                    Policy Number
                   </th>
                   <th className="text-left px-4 py-3 text-sm font-semibold uppercase tracking-wider">
-                    Premium
+                    Policy No
+                  </th>
+                  <th className="text-left px-4 py-3 text-sm font-semibold uppercase tracking-wider">
+                    Amount
                   </th>
                   <th className="text-right px-4 py-3 text-sm font-semibold uppercase tracking-wider rounded-tr-lg">
                     Action
@@ -233,19 +234,19 @@ function MRList() {
                       {item.id}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-800">
-                      {item.ompNumber}
+                      {item.mrNumber}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-800">
+                      {item.mrNo}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-800">
                       {item.policyNumber}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-800">
-                      {item.mobile}
+                      {item.policyNo}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-800">
-                      BDT{" "}
-                      {formatNumberToComma(
-                        Number(item.premium) + Number(item.vat)
-                      )}
+                      BDT {formatNumberToComma(Number(item.total))}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
                       <Link
