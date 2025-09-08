@@ -201,7 +201,7 @@ export default function OMPForm() {
       case "firstName":
       case "lastName":
       case "bank":
-      case "bankBranch":
+      case "bankbranch":
         // Allow letters, spaces, dot, comma for specific text fields
         if (!/^[A-Za-z\s.,]*$/.test(value)) {
           return; // Do not update state if invalid characters

@@ -4,15 +4,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import NotFound from "../NotFound";
 import moment from "moment";
-import {
-  FaChevronDown,
-  FaChevronUp,
-  FaTrashAlt,
-  FaEdit,
-  FaDownload,
-  FaPrint,
-} from "react-icons/fa";
-import { pdf, PDFDownloadLink, PDFViewer } from "@react-pdf/renderer";
+import { FaTrashAlt, FaEdit, FaDownload, FaPrint } from "react-icons/fa";
+import { pdf, PDFDownloadLink } from "@react-pdf/renderer";
 import QRCode from "qrcode";
 import MRPdf from "./MRPdf"; // Assuming MRPdf component is defined elsewhere for PDF generation
 import headerImage from "../../assets/pdfheaderimg2.jpg"; // Path to header image for PDF/display
@@ -31,7 +24,7 @@ import Loading from "../../components/Loading"; // Loading spinner component
 export default function MR() {
   const { id } = useParams(); // Get MR ID from URL parameters
   const navigate = useNavigate(); // Hook for navigation
-  const { isAuthenticated, token } = useAuth(); // Authentication context
+  const { isAuthenticated, token, user } = useAuth(); // Authentication context
   const [data, setData] = useState(null); // State to store MR data
   // console.log(data);
 
@@ -63,18 +56,26 @@ export default function MR() {
    * Generates a PDF blob and opens it in a hidden iframe for printing.
    */
   const handlePrint = async () => {
-    const url = await generatePdfBlob();
-
-    const iframe = document.createElement("iframe");
-    iframe.style.display = "none";
-    iframe.src = url;
-    document.body.appendChild(iframe);
-
     try {
-      iframe.contentWindow.focus();
-      iframe.contentWindow.print();
-    } catch (printError) {
-      console.error("Error during print operation:", printError);
+      const url = await generatePdfBlob(); // Should return a blob URL or a blob
+
+      // If it's a blob, create object URL
+      const blobUrl = typeof url === "string" ? url : URL.createObjectURL(url);
+
+      // Open in a new tab/window
+      const printWindow = window.open(blobUrl);
+      if (!printWindow) {
+        toast.error("Please allow popups to print the PDF.");
+        return;
+      }
+
+      // Wait for it to load before printing
+      printWindow.onload = () => {
+        printWindow.focus();
+        printWindow.print();
+      };
+    } catch (err) {
+      console.error("Print error:", err);
       toast.error(
         "Could not initiate printing. Please try downloading the PDF instead."
       );
@@ -91,7 +92,7 @@ export default function MR() {
     const fetchDataById = async () => {
       setLoading(true); // Set loading true before fetching
       try {
-        const res = await axios.get(`${config.apiUrl}/mr/${id}`);
+        const res = await axios.get(`${config.apiUrl}/mr/${id}/plus`);
         setData(res.data);
         setError(""); // Clear previous errors
         setNotFound(false); // Ensure notFound is false on success
@@ -214,13 +215,15 @@ export default function MR() {
             >
               <FaEdit className="text-lg" /> Edit
             </button>
-            <button
-              onClick={handleDelete}
-              className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center gap-2"
-              disabled={loading} // Disable during loading
-            >
-              <FaTrashAlt className="text-lg" /> Delete
-            </button>
+            {(user?.role === "admin" || user?.role === "all") && (
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center gap-2"
+                disabled={loading} // Disable during loading
+              >
+                <FaTrashAlt className="text-lg" /> Delete
+              </button>
+            )}
           </div>
         )}
 
@@ -256,7 +259,7 @@ export default function MR() {
       </PDFViewer> */}
 
       {/* MR Info */}
-      <div className="mx-auto bg-white shadow-xl rounded-sm sm:rounded-lg p-2 sm:p-6  w-full text-xl md:text-base">
+      <div className="mx-auto bg-white shadow-xl rounded-sm sm:rounded-lg p-2 md:p-6  w-full text-xl md:text-base">
         <Header />
         <MoneyReceiptInfo data={data} />
         <PremiumBox data={data} qrImage={qrImage} />
@@ -269,18 +272,33 @@ export default function MR() {
 // Component
 function Header() {
   return (
-    <header className="">
-      <img alt="bgic logo" src={headerImage} className="h-full w-full" />
+    <header className="w-full">
+      {/* Logo */}
+      <img
+        alt="bgic logo"
+        src={headerImage}
+        className="w-full max-h-36 object-contain mx-auto"
+      />
 
-      {/* heading */}
-      <div className="text-center mt-5 px-6">
-        <p className="">Head Office: 42, Dilkusha C/A Motijheel Dhaka.</p>
-        <p className="">Phone: 02223383056-8, 02223351090-1 Fax: 02223384212</p>
-        <p className="">Email: info@bgicinsure.com web: www.bgicinsure.com</p>
+      {/* Heading Info */}
+      <div className="text-center mt-4 px-4 md:px-6">
+        <p className="text-sm md:text-base">
+          Head Office: 42, Dilkusha C/A Motijheel Dhaka.
+        </p>
+        <p className="text-sm md:text-base">
+          Phone: 02223383056-8, 02223351090-1 Fax: 02223384212
+        </p>
+        <p className="text-sm md:text-base">
+          Email: info@bgicinsure.com Web: www.bgicinsure.com
+        </p>
 
-        <h3 className="text-left my-3">BIN : 000001322-0202</h3>
-        <h2 className="text-md md:text-xl mb-2 uppercase">MONEY RECEIPT</h2>
-        <h3 className="">MUSHAK: 6.3</h3>
+        <h3 className="md:text-left text-sm md:text-base mt-3">
+          BIN: 000001322-0202
+        </h3>
+        <h2 className="text-md md:text-xl mb-2 uppercase font-semibold">
+          Money Receipt
+        </h2>
+        <h3 className="text-sm md:text-base">MUSHAK: 6.3</h3>
       </div>
     </header>
   );
@@ -291,41 +309,64 @@ function MoneyReceiptInfo({ data }) {
     <div className=" p-6 leading-relaxed">
       {/* Header Info */}
       <div className="grid sm:grid-cols-2 gap-3 mb-4">
-        <LabelValue label="Issuing Office" value={data.mrOffice} />
+        <LabelValue label="Issuing Office" value={data?.mrOfficeName} />
         <LabelValue
           label="Date"
-          value={moment(data.mrDate).format("DD-MM-YYYY")}
+          value={moment(data?.mrDate).format("DD-MM-YYYY")}
         />
-        <LabelValue label="Money Receipt No" value={data.mrNo} />
-        <LabelValue label="MR Number" value={data.mrNumber} />
-        <LabelValue label="Class of Insurance" value={data.policyClass} />
+        <LabelValue label="Money Receipt No" value={data?.mrNo} />
+        <LabelValue label="MR Number" value={data?.mrNumber} />
+        <LabelValue label="Class of Insurance" value={data?.mrClassName} />
       </div>
 
       <hr className="border-gray-300 my-2" />
 
       <div className="grid sm:grid-cols-2 gap-3 mb-4">
-        <LabelValue label="Received from" value={data.receivedFrom} />
+        <LabelValue label="Client Name" value={data?.clientName} />
+        <LabelValue label="Client Address" value={data?.clientAddress} />
+        <LabelValue label="Client Mobile" value={data?.clientMobile} />
+        <LabelValue label="Client Bank" value={data?.clientBankName} />
+        <LabelValue
+          label="Client Bank Branch"
+          value={data?.clientBankBranchName}
+        />
+        {data?.bin && <LabelValue label="Client BIN" value={data.bin} />}
+        {data?.receivedFrom && (
+          <LabelValue
+            label="Extra information of client"
+            value={data.receivedFrom}
+          />
+        )}
+      </div>
+
+      <hr className="border-gray-300 my-2" />
+
+      <div className="grid sm:grid-cols-2 gap-3 mb-4">
+        <LabelValue label="Premium" value={data?.premium} />
+        <LabelValue label="Stamp" value={data?.stamp} />
+        <LabelValue label="Coins Net" value={data?.coinsnet} />
+        <LabelValue label="Vat" value={data?.vat} />
         <LabelValue
           label="The sum of"
-          // value={`Tk. ${parseFloat(data.total).toFixed(2)}`}
+          // value={`Tk. ${parseFloat(data?.amount).toFixed(2)}`}
           value={`Tk. ${formatNumberToComma(
-            data.total
-          )} (${convertAmountToWords(data.total)} taka)`}
+            data?.amount
+          )} (${convertAmountToWords(data?.amount)} taka)`}
         />
       </div>
 
       <hr className="border-gray-300 my-2" />
 
       <div className="grid sm:grid-cols-2 gap-3 mb-4">
-        <LabelValue label="Mode of Payment" value={data.mop} />
-        <LabelValue label="Cheque No / Reference" value={data.chequeNo} />
+        <LabelValue label="Mode of Payment" value={data?.mop} />
+        <LabelValue label="Cheque No / Reference" value={data?.chequeNo} />
         <LabelValue
-          label="Cheque Date"
-          value={moment(data.chequeDate).format("DD-MM-YYYY")}
+          label="Payment / Cheque Date"
+          value={moment(data?.chequeDate).format("DD-MM-YYYY")}
         />
-        <LabelValue label="Bank" value={data.bank} />
-        {data.bankBranch && (
-          <LabelValue label="Bank Branch" value={data.bankBranch} />
+        <LabelValue label="Bank" value={data?.bankName} />
+        {data?.bankbranchName && (
+          <LabelValue label="Bank Branch" value={data.bankbranchName} />
         )}
       </div>
 
@@ -333,19 +374,19 @@ function MoneyReceiptInfo({ data }) {
 
       {/* Policy Info */}
       <LabelValue
-        label="Issued Against"
-        value={data.policyNo}
+        label="Issued Against (Policy No)"
+        value={data?.policyNo}
         className="mb-4 col-span-2"
       />
       <div className="grid sm:grid-cols-2 gap-3 mb-4">
-        <LabelValue label="Policy Number" value={data.policyNumber} />
+        <LabelValue label="Policy Number" value={data?.policyNumber} />
         <LabelValue
           label="Policy Date"
-          value={moment(data.policyDate).format("DD-MM-YYYY")}
+          value={moment(data?.policyDate).format("DD-MM-YYYY")}
         />
       </div>
 
-      {data.note && (
+      {data?.note && (
         <LabelValue
           label="Note"
           value={data.note}
@@ -358,9 +399,11 @@ function MoneyReceiptInfo({ data }) {
 
 function LabelValue({ label, value }) {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-1 text-sm md:text-base w-full">
       <span className="text-gray-500">{label}</span>
-      <span className="font-medium text-gray-800">{value || "—"}</span>
+      <span className="font-medium text-gray-800 break-words">
+        {value || "—"}
+      </span>
     </div>
   );
 }
@@ -369,29 +412,29 @@ function PremiumBox({ data, qrImage }) {
   return (
     <section className="flex flex-col md:flex-row md:justify-between items-center text-center md:text-left px-6">
       {/* Premium */}
-      <table className="mb-6 w-full md:w-1/2 border border-gray-400 text-left">
-        <tbody>
-          <ReceiptRow label="Premium" amount={data.premium} />
-          {data.mrClassCode === "MC" && (
-            <ReceiptRow label="Stamp" amount={data.stamp} />
-          )}
-          {data.coins === "Co-Ins" && (
-            <ReceiptRow label="Coins (Net)" amount={data.coinsnet} />
-          )}
-          {data.mrClassCode === "MISC/OMP" && (
-            <ReceiptRow label="VAT" amount={data.vat} />
-          )}
-          <ReceiptRow
-            label="Total"
-            amount={data.total}
-            className="bg-gray-300"
-          />
-        </tbody>
-      </table>
+      <div className="overflow-x-auto mb-6 w-full md:w-1/2">
+        <table className="min-w-full border border-gray-400 text-left">
+          <tbody>
+            <ReceiptRow label="Premium" amount={data?.premium} />
+            {data.isCoins === 1 && (
+              <ReceiptRow label="Coins (Net)" amount={data.coinsnet} />
+            )}
+            {data.isStamp === 1 && (
+              <ReceiptRow label="Stamp" amount={data.stamp} />
+            )}
+            {data.isVat === 1 && <ReceiptRow label="VAT" amount={data.vat} />}
+            <ReceiptRow
+              label="Total"
+              amount={data?.amount}
+              className="bg-gray-300 font-semibold"
+            />
+          </tbody>
+        </table>
+      </div>
 
       {/* QR */}
       <div className="w-1/2 flex justify-center items-center">
-        <div className=" w-48 h-48 mx-auto md:mx-0">
+        <div className="w-full md:w-48 md:h-48 mx-auto md:mx-0">
           <img
             src={qrImage}
             className="w-full h-full object-contain"
@@ -405,11 +448,12 @@ function PremiumBox({ data, qrImage }) {
 
 function ReceiptRow({ label, amount, className }) {
   return (
-    <tr className={`${className}`}>
-      <td className="border px-3 py-1">{label}</td>
-      <td className="border px-3 py-1">BDT</td>
-      <td className="border px-3 py-1 text-right">
-        {/* {parseFloat(amount).toFixed(2)} */}
+    <tr className={`text-sm md:text-base ${className}`}>
+      <td className="border px-2 md:px-3 py-1">{label}</td>
+      <td className="border px-2 md:px-3 py-1 text-center text-gray-600">
+        BDT
+      </td>
+      <td className="border px-2 md:px-3 py-1 text-right font-medium text-gray-800">
         {formatNumberToComma(amount)}
       </td>
     </tr>

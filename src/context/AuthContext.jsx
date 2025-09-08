@@ -7,30 +7,42 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem("token") || null);
+  const [user, setUser] = useState(null);
   const [justLoggedOut, setJustLoggedOut] = useState(false);
 
-  const login = (newToken) => {
+  const login = (newToken, newUser) => {
     localStorage.setItem("token", newToken);
+    localStorage.setItem("user", JSON.stringify(newUser));
     setToken(newToken);
+    setUser(newUser);
     setJustLoggedOut(false);
   };
 
   const logout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
     setToken(null);
+    setUser(null);
     setJustLoggedOut(true);
   };
 
   useEffect(() => {
     const savedToken = localStorage.getItem("token");
-    if (savedToken && !token) {
-      setToken(savedToken);
-    }
+    const savedUser = localStorage.getItem("user");
+    if (savedToken) setToken(savedToken);
+    if (savedUser) setUser(JSON.parse(savedUser));
   }, []);
 
   return (
     <AuthContext.Provider
-      value={{ token, login, logout, isAuthenticated: !!token, justLoggedOut }}
+      value={{
+        user,
+        token,
+        login,
+        logout,
+        isAuthenticated: !!token,
+        justLoggedOut,
+      }}
     >
       {children}
     </AuthContext.Provider>

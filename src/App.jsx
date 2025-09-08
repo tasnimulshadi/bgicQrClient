@@ -11,6 +11,9 @@ import { ToastContainer } from "react-toastify";
 import MRList from "./pages/MR/MRList";
 import MRForm from "./pages/MR/MRForm";
 import MR from "./pages/MR/MR";
+import FieldSettings from "./pages/Fields/FieldSettings";
+import FieldSettingList from "./pages/Fields/FieldSettingList";
+import ClientField from "./pages/Fields/ClientField";
 
 function App() {
   return (
@@ -21,7 +24,7 @@ function App() {
       <Router>
         <Navbar />
 
-        <div className="mx-auto max-w-6xl p-4 min-h-screen ">
+        <div className="mx-auto max-w-6xl p-2 sm:p-6 min-h-screen ">
           {" "}
           {/*  bg-gray-50 */}
           <Routes>
@@ -29,7 +32,7 @@ function App() {
             <Route
               path="/dashboard"
               element={
-                <PrivateRoute>
+                <PrivateRoute allowedRoles={["admin", "all", "omp", "mr"]}>
                   <Dashboard />
                 </PrivateRoute>
               }
@@ -39,7 +42,7 @@ function App() {
             <Route
               path="/omp"
               element={
-                <PrivateRoute>
+                <PrivateRoute allowedRoles={["admin", "all", "omp"]}>
                   <OMPList />
                 </PrivateRoute>
               }
@@ -48,7 +51,7 @@ function App() {
             <Route
               path="/mr"
               element={
-                <PrivateRoute>
+                <PrivateRoute allowedRoles={["admin", "all", "mr"]}>
                   <MRList />
                 </PrivateRoute>
               }
@@ -58,7 +61,7 @@ function App() {
             <Route
               path="/omp/new"
               element={
-                <PrivateRoute>
+                <PrivateRoute allowedRoles={["admin", "all", "omp"]}>
                   <OMPForm />
                 </PrivateRoute>
               }
@@ -67,7 +70,7 @@ function App() {
             <Route
               path="/mr/new"
               element={
-                <PrivateRoute>
+                <PrivateRoute allowedRoles={["admin", "all", "mr"]}>
                   <MRForm />
                 </PrivateRoute>
               }
@@ -77,7 +80,7 @@ function App() {
             <Route
               path="/omp/edit/:id"
               element={
-                <PrivateRoute>
+                <PrivateRoute allowedRoles={["admin", "all", "omp"]}>
                   <OMPForm />
                 </PrivateRoute>
               }
@@ -86,8 +89,34 @@ function App() {
             <Route
               path="/mr/edit/:id"
               element={
-                <PrivateRoute>
+                <PrivateRoute allowedRoles={["admin", "all", "mr"]}>
                   <MRForm />
+                </PrivateRoute>
+              }
+            />
+
+            {/* Others */}
+            <Route
+              path="/field-settings"
+              element={
+                <PrivateRoute allowedRoles={["admin", "all", "omp", "mr"]}>
+                  <FieldSettings />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/field-settings/:field"
+              element={
+                <PrivateRoute allowedRoles={["admin", "all", "omp", "mr"]}>
+                  <FieldSettingList />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/field-settings/client"
+              element={
+                <PrivateRoute allowedRoles={["admin", "all", "omp", "mr"]}>
+                  <ClientField />
                 </PrivateRoute>
               }
             />

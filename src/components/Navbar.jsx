@@ -1,56 +1,111 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useState, useRef, useEffect } from "react";
+import { FaUserCircle } from "react-icons/fa";
 
-/**
- * Navbar component for navigation and logout functionality.
- * It hides itself on the login page or if the user is not authenticated.
- */
 function Navbar() {
-  const { isAuthenticated, logout } = useAuth(); // Get authentication status and logout function from AuthContext
-  const navigate = useNavigate(); // Hook for programmatic navigation
-  const location = useLocation(); // Hook to get the current URL location
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  // Conditional rendering: Hide Navbar on login page or if not authenticated
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown if clicked outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   if (location.pathname === "/bgichologin" || !isAuthenticated) {
-    return null; // Don't render the Navbar
+    return null;
   }
 
-  /**
-   * Handles the logout process.
-   * Calls the logout function from AuthContext and navigates to the login page.
-   */
   const handleLogout = () => {
-    logout(); // Perform logout
-    navigate("/bgichologin"); // Redirect to login page
+    logout();
+    setDropdownOpen(false);
+    navigate("/bgichologin");
   };
 
   return (
     <nav className="bg-blue-950 text-white py-4 shadow-md">
-      {" "}
-      {/* Darker background for navbar */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {" "}
-        {/* Wider max-width and more consistent padding */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
           {/* Brand Logo/Link to Dashboard */}
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             <Link
               to="/dashboard"
-              className="text-4xl font-extrabold text-white hover:text-blue-300 transition-colors duration-200 ease-in-out tracking-wide" // Larger, bolder, and more vibrant text for logo
+              className="text-4xl font-extrabold text-white hover:text-blue-300 transition-colors duration-200 tracking-wide"
             >
               BGIC
             </Link>
           </div>
 
-          {/* Logout Button */}
-          <div>
+          {/* User Dropdown */}
+          <div className="relative" ref={dropdownRef}>
             <button
-              aria-label="Logout"
-              onClick={handleLogout}
-              className="px-5 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 cursor-pointer transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center gap-2" // Enhanced button styling
+              onClick={() => setDropdownOpen((prev) => !prev)}
+              className="flex items-center justify-center text-white hover:text-gray-200 transition duration-300 cursor-pointer"
+              aria-label="User menu"
             >
-              Logout
+              <FaUserCircle className="text-3xl" />
             </button>
+
+            {/* Animated Dropdown */}
+            <div
+              className={`absolute right-0 mt-2 w-48 bg-white text-gray-800 border border-gray-200 rounded-lg shadow-lg z-50 transform transition-all duration-300 origin-top-right
+                ${
+                  dropdownOpen
+                    ? "opacity-100 scale-100 translate-y-0"
+                    : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
+                }`}
+            >
+              <div className="px-4 py-3 border-b border-gray-100 flex justify-between items-center cursor-default">
+                <p className="font-semibold truncate">{user?.username}</p>
+                <p className="text-sm text-gray-500 truncate">{user?.role}</p>
+              </div>
+              <div className="flex flex-col">
+                <Link
+                  to="/dashboard"
+                  className="px-4 py-2 hover:bg-gray-100 transition duration-200"
+                  onClick={() => setDropdownOpen(false)}
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  to="/field-settings"
+                  className="px-4 py-2 hover:bg-gray-100 transition duration-200"
+                  onClick={() => setDropdownOpen(false)}
+                >
+                  Field Settings
+                </Link>
+                {/* <Link
+                  to="/profile"
+                  className="px-4 py-2 hover:bg-gray-100 transition duration-200"
+                  onClick={() => setDropdownOpen(false)}
+                >
+                  Profile
+                </Link> */}
+                {/* <Link
+                  to="/settings"
+                  className="px-4 py-2 hover:bg-gray-100 transition duration-200"
+                  onClick={() => setDropdownOpen(false)}
+                >
+                  Settings
+                </Link> */}
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left px-4 py-2 text-red-600 font-semibold hover:bg-red-200 transition duration-200 rounded-b-lg cursor-pointer"
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

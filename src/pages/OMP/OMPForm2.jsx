@@ -113,7 +113,7 @@ export default function OMPForm2() {
     chequeNo: "",
     chequeDate: "",
     bank: "",
-    bankBranch: "",
+    bankbranch: "",
     note: "",
   });
 
@@ -217,7 +217,7 @@ export default function OMPForm2() {
       case "firstName":
       case "lastName":
       case "bank":
-      case "bankBranch":
+      case "bankbranch":
         // Allow letters, spaces, dot, comma for specific text fields
         if (!/^[A-Za-z\s.,]*$/.test(value)) {
           return; // Do not update state if invalid characters
@@ -368,7 +368,7 @@ export default function OMPForm2() {
       !data.chequeNo ||
       !data.chequeDate ||
       !data.bank ||
-      !data.bankBranch
+      !data.bankbranch
     ) {
       setError("Please fill in all required fields.");
       setLoading(false);
@@ -1106,28 +1106,28 @@ export default function OMPForm2() {
               placeholder="Enter Bank Name"
               tabIndex={23}
               id="bank"
-              onKeyDown={(e) => handleKeyDown(e, "bankBranch")}
+              onKeyDown={(e) => handleKeyDown(e, "bankbranch")}
             />
           </div>
 
           {/* Branch */}
           <div className="sm:col-span-1">
             <label
-              htmlFor="bankBranch"
+              htmlFor="bankbranch"
               className="block mb-1 font-medium text-gray-700"
             >
               Branch
             </label>
             <input
               type="text"
-              name="bankBranch"
+              name="bankbranch"
               required={data.mop === "Cheque"} // Make required only if MOP is Cheque
-              value={data.bankBranch ?? ""}
+              value={data.bankbranch ?? ""}
               onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
               placeholder="Enter Bank's Branch Name"
               tabIndex={24}
-              id="bankBranch"
+              id="bankbranch"
               onKeyDown={(e) => handleKeyDown(e, "note")}
             />
           </div>

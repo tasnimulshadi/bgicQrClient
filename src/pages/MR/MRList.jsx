@@ -17,11 +17,13 @@ import Loading from "../../components/Loading";
 function MRList() {
   const { token } = useAuth();
   const [dataList, setDataList] = useState([]);
+  // console.log(dataList);
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({
-    mrNumber: "",
-    policyNumber: "",
+    mrNo: "",
+    policyNo: "",
   });
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -30,22 +32,17 @@ function MRList() {
 
   // Memoized fetchData function to avoid unnecessary re-renders
   const fetchData = useCallback(
-    async (
-      filters,
-      currentPage,
-      itemsPerPage,
-      token,
-      setLoading,
-      setDataList,
-      setTotalItems,
-      setError
-    ) => {
+    async (filters, currentPage, itemsPerPage, token) => {
       setLoading(true);
       try {
         const query = new URLSearchParams();
-        if (filters.mrNumber) query.append("mrNumber", filters.mrNumber);
-        if (filters.policyNumber)
-          query.append("policyNumber", filters.policyNumber);
+        if (filters.mrNo) {
+          query.append("mrNo", filters.mrNo.trim());
+        }
+        if (filters.policyNo) {
+          query.append("policyNo", filters.policyNo.trim());
+        }
+
         query.append("page", currentPage);
         query.append("limit", itemsPerPage);
 
@@ -53,8 +50,8 @@ function MRList() {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        setDataList(res.data.data);
-        setTotalItems(res.data.total);
+        setDataList(res.data?.data);
+        setTotalItems(res.data?.total);
         setError("");
       } catch (err) {
         setError(err.response?.data?.error || "Failed to load MR data.");
@@ -75,16 +72,7 @@ function MRList() {
     let debounceTimer;
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
-      fetchData(
-        filters,
-        currentPage,
-        itemsPerPage,
-        token,
-        setLoading,
-        setDataList,
-        setTotalItems,
-        setError
-      );
+      fetchData(filters, currentPage, itemsPerPage, token);
     }, 1000);
 
     return () => clearTimeout(debounceTimer); // Clean up on unmount or before rerun
@@ -94,7 +82,7 @@ function MRList() {
   function handleFilterSubmit(e) {
     e.preventDefault();
     setCurrentPage(1); // Reset to first page when new filters are applied
-    fetchData(); // Fetch data with new filters
+    fetchData(filters, currentPage, itemsPerPage, token); // Fetch data with new filters
   }
 
   // Handler for pagination changes
@@ -129,13 +117,13 @@ function MRList() {
     <div className="flex flex-col items-center min-h-screen ">
       {/* Page Header and Add New Button */}
       <div className="flex justify-between items-center w-full mb-6 px-4 sha">
-        <h1 className="text-4xl font-bold text-blue-950">MR List</h1>
+        <h1 className="text-4xl font-bold text-blue-950">Money Receipts</h1>
         <Link
           to={"/mr/new"}
           className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-500 to-green-700 text-white font-semibold rounded-lg shadow-md hover:from-green-600 hover:to-green-800 transition duration-300 ease-in-out transform hover:scale-105"
         >
           <FaPlus className="mr-2 text-lg" />
-          Add New MR
+          Add Money Receipt
         </Link>
       </div>
 
@@ -144,27 +132,27 @@ function MRList() {
         className="w-full grid grid-cols-1 sm:grid-cols-3 md:grid-cols-7 gap-4 bg-white p-6 rounded-lg shadow-xl mb-8"
         onSubmit={handleFilterSubmit}
       >
-        {/* Search by MR Number */}
+        {/* Search by mrNo */}
         <input
-          type="number"
-          name="policyNumber"
-          id="policyNumberFilter" // Added ID for accessibility
-          placeholder="Search Policy No."
-          value={filters.policyNumber}
+          type="text"
+          name="mrNo"
+          id="mrNoFilter" // Added ID for accessibility
+          placeholder="Search MR No"
+          value={filters.mrNo}
           onChange={(e) =>
-            setFilters((prev) => ({ ...prev, policyNumber: e.target.value }))
+            setFilters((prev) => ({ ...prev, mrNo: e.target.value }))
           }
           className="border border-gray-300 px-4 py-2 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 col-span-3 sm:col-span-1 md:col-span-3"
         />
-        {/* Search by mrNumber Number */}
+        {/* Search by policyNo */}
         <input
-          type="number"
-          name="mrNumber"
-          id="mrNumberFilter" // Added ID for accessibility
-          placeholder="Search MR No"
-          value={filters.mrNumber}
+          type="text"
+          name="policyNo"
+          id="policyNoFilter" // Added ID for accessibility
+          placeholder="Search Policy No."
+          value={filters.policyNo}
           onChange={(e) =>
-            setFilters((prev) => ({ ...prev, mrNumber: e.target.value }))
+            setFilters((prev) => ({ ...prev, policyNo: e.target.value }))
           }
           className="border border-gray-300 px-4 py-2 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 col-span-3 sm:col-span-1 md:col-span-3"
         />
@@ -182,14 +170,14 @@ function MRList() {
       {loading ? (
         // Loading component
         <Loading message="Fetching MR data..." />
-      ) : dataList.length === 0 ? (
+      ) : dataList?.length === 0 ? (
         // No data message
         <div className="bg-white p-8 rounded-lg shadow-xl text-center w-full max-w-md">
           <p className="text-xl text-gray-700 font-semibold">
-            No MR records found.
+            No money receipt found.
           </p>
           <p className="text-md text-gray-500 mt-2">
-            Try adjusting your search filters or add a new MR.
+            Try adjusting your search filters or add a new money receipt.
           </p>
         </div>
       ) : (
@@ -223,7 +211,7 @@ function MRList() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {dataList.map((item, index) => (
+                {dataList?.map((item, index) => (
                   <tr
                     key={item.id}
                     className={`transition-colors duration-200 ease-in-out ${
@@ -246,7 +234,7 @@ function MRList() {
                       {item.policyNo}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-800">
-                      BDT {formatNumberToComma(Number(item.total))}
+                      BDT {formatNumberToComma(Number(item.amount))}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
                       <Link

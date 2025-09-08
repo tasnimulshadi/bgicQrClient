@@ -196,7 +196,7 @@ const MRPdf = ({ qrImage, data }) => (
           <View style={styles.section2_leftBlock}>
             <View style={styles.labelValue}>
               <Text style={styles.label}>Issuing Office</Text>
-              <Text style={styles.value}>: {data.mrOffice}</Text>
+              <Text style={styles.value}>: {data.mrOfficeName}</Text>
             </View>
             <View style={styles.labelValue}>
               <Text style={styles.label}>Money Receipt No</Text>
@@ -204,7 +204,7 @@ const MRPdf = ({ qrImage, data }) => (
             </View>
             <View style={styles.labelValue}>
               <Text style={styles.label}>Class of Insurance</Text>
-              <Text style={styles.value}>: {data.mrClass}</Text>
+              <Text style={styles.value}>: {data.mrClassName}</Text>
             </View>
           </View>
           <View style={styles.section2_rightBlock}>
@@ -226,15 +226,24 @@ const MRPdf = ({ qrImage, data }) => (
                 marginLeft: 30,
               }}
             >
-              {data.receivedFrom}
+              {[
+                data?.clientBankName,
+                data?.clientBankBranchName,
+                data?.clientName,
+                data?.clientAddress,
+                data?.clientBin,
+                data?.receivedFrom,
+              ]
+                .filter(Boolean)
+                .join(", ")}
             </Text>
           </View>
 
           <View style={styles.row}>
             <Text style={styles.rowLabel}>The sum of</Text>
             <Text style={styles.rowContent}>
-              Tk. {formatNumberToComma(data.total)} (
-              {convertAmountToWords(data.total)} taka)
+              Tk. {formatNumberToComma(data.amount)} (
+              {convertAmountToWords(data.amount)} taka)
             </Text>
           </View>
 
@@ -251,7 +260,11 @@ const MRPdf = ({ qrImage, data }) => (
 
           <View style={styles.row}>
             <Text style={styles.rowLabel}>Drawn on</Text>
-            <Text style={styles.rowContent}>{data.bank}</Text>
+            <Text style={styles.rowContent}>
+              {[data?.bankName, data?.bankbranchName]
+                .filter(Boolean)
+                .join(", ")}
+            </Text>
           </View>
 
           <View style={styles.row}>
@@ -278,18 +291,8 @@ const MRPdf = ({ qrImage, data }) => (
                   {formatNumberToComma(data.premium)}
                 </Text>
               </View>
-              {data.mrClassCode === "MC" && (
-                <View style={styles.tableRow}>
-                  <Text style={[styles.tableCell, styles.tableCell1]}>
-                    Stamp
-                  </Text>
-                  <Text style={[styles.tableCell, styles.tableCell2]}>BDT</Text>
-                  <Text style={[styles.tableCell, styles.tableCell3]}>
-                    {formatNumberToComma(data.stamp)}
-                  </Text>
-                </View>
-              )}
-              {data.coins === "Co-Ins" && (
+
+              {data.isCoins === 1 && (
                 <View style={styles.tableRow}>
                   <Text style={[styles.tableCell, styles.tableCell1]}>
                     CoIns(Net)
@@ -300,7 +303,20 @@ const MRPdf = ({ qrImage, data }) => (
                   </Text>
                 </View>
               )}
-              {data.mrClassCode === "MISC/OMP" && (
+
+              {data.isStamp === 1 && (
+                <View style={styles.tableRow}>
+                  <Text style={[styles.tableCell, styles.tableCell1]}>
+                    Stamp
+                  </Text>
+                  <Text style={[styles.tableCell, styles.tableCell2]}>BDT</Text>
+                  <Text style={[styles.tableCell, styles.tableCell3]}>
+                    {formatNumberToComma(data.stamp)}
+                  </Text>
+                </View>
+              )}
+
+              {data.isVat === 1 && (
                 <View style={styles.tableRow}>
                   <Text style={[styles.tableCell, styles.tableCell1]}>VAT</Text>
                   <Text style={[styles.tableCell, styles.tableCell2]}>BDT</Text>
@@ -316,7 +332,7 @@ const MRPdf = ({ qrImage, data }) => (
                 <Text style={[styles.tableCell, styles.tableCell1]}>Total</Text>
                 <Text style={[styles.tableCell, styles.tableCell2]}>BDT</Text>
                 <Text style={[styles.tableCell, styles.tableCell3]}>
-                  {formatNumberToComma(data.total)}
+                  {formatNumberToComma(data.amount)}
                 </Text>
               </View>
             </View>

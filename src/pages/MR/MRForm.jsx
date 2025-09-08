@@ -1,41 +1,11 @@
-// src/pages/MRForm.jsx
+// src/pages/MR/MRForm.jsx
 import axios from "axios";
-import { useEffect, useState } from "react"; // Removed useRef as it's no longer needed
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import moment from "moment";
 import config from "../../utility/config";
 import { toast } from "react-toastify";
-import SearchModal from "./SearchModal";
-
-// Dropdown data and VAT percentage are constant, so define them outside the component
-// to prevent re-creation on every render.
-const dropdownData = {
-  mrOffice: [{ id: "DZO", value: "Dhaka Zonal Office" }],
-  mrClass: [
-    { id: "MC", value: "Marine Cargo" },
-    { id: "MISC/OMP", value: "Miscellaneous" },
-  ],
-  coins: [
-    { id: 0, value: "N/A" },
-    { id: 1, value: "Co-Ins" },
-  ],
-  currency: [
-    { id: 1, value: "US$" },
-    { id: 2, value: "EURO" },
-    { id: 3, value: "TK" },
-  ],
-  mop: [
-    { id: 1, value: "Cash" },
-    { id: 2, value: "Cheque" },
-    { id: 3, value: "D.D" },
-    { id: 4, value: "T.T" },
-    { id: 5, value: "Pay Order" },
-    { id: 6, value: "Credit Advice" },
-    { id: 7, value: "Bank Guarantee" },
-  ],
-  vatPercentage: 30,
-};
 
 export default function MRForm() {
   const params = useParams();
@@ -44,75 +14,168 @@ export default function MRForm() {
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [dropDown, setDropDown] = useState({
+    office: [],
+    class: [],
+    client: [],
+    mop: [],
+    bank: [],
+    bankbranch: [],
+  });
   const [data, setData] = useState({
-    mrOffice: "",
-    mrOfficeCode: "",
-    mrClass: "",
-    mrClassCode: "",
+    mrOfficeId: "",
+    mrClassId: "",
     mrNumber: "",
-    mrDate: "",
+    mrDate: moment(new Date()).format("YYYY-MM-DD"),
     mrNo: "",
     receivedFrom: "",
-    mop: "",
+    mopId: "",
     chequeNo: "",
-    chequeDate: "",
-    bank: "",
-    bankBranch: "",
-
-    policyOffice: "",
-    policyOfficeCode: "",
-    policyClass: "",
-    policyClassCode: "",
+    chequeDate: moment(new Date()).format("YYYY-MM-DD"),
+    bankId: "",
+    bankbranchId: "",
+    policyOfficeId: "",
+    policyClassId: "",
     policyNumber: "",
-    policyDate: "",
-    coins: "",
+    policyDate: moment(new Date()).format("YYYY-MM-DD"),
     policyNo: "",
-
+    isCoins: 0,
+    isStamp: 0,
+    isVat: 0,
     premium: "",
-    stamp: "",
-    coinsnet: "",
-    vat: "",
-    total: "",
-
+    vat: 0,
+    stamp: 0,
+    coinsnet: 0,
     note: "",
+    clientId: "",
   });
-
   // console.log(data);
 
-  // Effect to set document title and fetch data for edit mode
+  // Single useEffect for all data fetching and side effects
   useEffect(() => {
     document.title = `BGIC - MR ${params.id ? "Update" : "Create"}`;
 
-    const fetchDataById = async () => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError("");
       try {
-        setLoading(true); // Set loading true
-        const res = await axios.get(`${config.apiUrl}/mr/${params.id}`);
+        // Fetch dropdowns
+        const dropDownRes = await axios.get(
+          `${config.apiUrl}/mr/getAllDropDown`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setDropDown(dropDownRes.data);
 
-        // Ensure all date fields are correctly formatted to YYYY-MM-DD for input type="date"
-        const transformedData = {
-          ...res.data,
-          mrDate: moment(res.data.mrDate).format("YYYY-MM-DD"),
-          chequeDate: moment(res.data.chequeDate).format("YYYY-MM-DD"),
-          policyDate: moment(res.data.policyDate).format("YYYY-MM-DD"),
-        };
-
-        setData((prev) => ({ ...prev, ...transformedData }));
+        // Fetch data for edit mode
+        if (params.id) {
+          const mrRes = await axios.get(`${config.apiUrl}/mr/${params.id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          // console.log(mrRes.data);
+          setData((prev) => ({ ...prev, ...mrRes.data }));
+        }
       } catch (err) {
-        setError(err.response?.data?.error || "Failed to load data");
+        setError(err.message || "Failed to load data");
       } finally {
-        setLoading(false); // Set loading false
+        setLoading(false);
       }
     };
 
-    if (params.id) {
-      fetchDataById();
-    }
+    fetchData();
+  }, [params.id, token]);
 
-    // Focus on the first input field on component mount
-    document.getElementById("mrOffice").focus();
-  }, [params.id]); // Added params.id to dependency array
+  // Effect for Calculate Data
+  useEffect(() => {
+    setData((prev) => {
+      const newData = { ...prev };
 
-  // Effect to handle error toasts
+      // mrNo
+      if (
+        prev.mrNumber &&
+        prev.mrDate &&
+        prev.mrOfficeId &&
+        dropDown?.office?.length > 0
+      ) {
+        const mrOfficeCode = dropDown.office.find(
+          (o) => o.id == prev.mrOfficeId
+        )?.officeCode;
+
+        newData.mrNo = `${mrOfficeCode}-${moment(prev.mrDate).year()}-${
+          prev.mrNumber
+        }`;
+      } else {
+        newData.mrNo = "";
+      }
+
+      // policyNo
+      if (
+        prev.policyNumber &&
+        prev.policyDate &&
+        prev.mrOfficeId &&
+        prev.mrClassId != null &&
+        prev.isCoins != undefined &&
+        dropDown?.office?.length > 0 &&
+        dropDown?.class?.length > 0
+      ) {
+        const formattedPolicyDate = moment(prev.policyDate).format("/MM/YYYY");
+        const coInsAvailable = prev.isCoins === 1 ? `-(Co-Ins)` : "";
+        const policyOfficeCode = dropDown.office.find(
+          (o) => o.id == prev.mrOfficeId
+        )?.officeCode;
+        const policyClassCode = dropDown.class.find(
+          (c) => c.id == prev.mrClassId
+        )?.classCode;
+
+        newData.policyNo = `BGIC/${policyOfficeCode}/${policyClassCode}-${prev.policyNumber}${formattedPolicyDate}${coInsAvailable}`;
+        newData.policyOfficeId = prev.mrOfficeId;
+        newData.policyClassId = prev.mrClassId;
+      } else {
+        newData.policyNo = "";
+      }
+
+      // coinsnet
+      if (prev.isCoins === 0) {
+        newData.coinsnet = 0;
+      }
+
+      // stamp
+      if (prev.isStamp === 0) {
+        newData.stamp = 0;
+      }
+
+      // vat
+      if (prev.isVat === 0) {
+        newData.vat = 0;
+      }
+
+      return newData;
+    });
+  }, [
+    dropDown.class,
+    dropDown.office,
+    data.mrNumber,
+    data.mrDate,
+    data.mrOfficeId,
+    data.isCoins,
+    data.mrClassId,
+    data.policyDate,
+    data.policyNumber,
+    data.isStamp,
+    data.isVat,
+  ]);
+
+  const totalAmount = useMemo(
+    () =>
+      Number(data?.premium) +
+      Number(data?.coinsnet) +
+      Number(data?.vat) +
+      Number(data?.stamp),
+    [data.premium, data.coinsnet, data.vat, data.stamp]
+  );
+
+  // Single useEffect to handle toasts for errors
   useEffect(() => {
     if (error) {
       toast.error(
@@ -121,296 +184,74 @@ export default function MRForm() {
           <p>{error}</p>
         </div>
       );
-      setError(""); // Clear error after showing toast
+      setError("");
     }
   }, [error]);
 
-  // Unified handleChange function to manage all input changes and derived calculations
+  // handleChange function to manage all input changes
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    let updatedValue = value;
-    let newData = { ...data, [name]: updatedValue };
+    const { name, type, checked, value } = e.target;
 
-    // Specific logic for different fields
-    switch (name) {
-      case "mrOffice": {
-        const foundOffice = dropdownData.mrOffice.find(
-          (item) => item.value === value
-        );
-        if (foundOffice) {
-          newData = {
-            ...newData,
-            mrOffice: value,
-            mrOfficeCode: foundOffice.id,
-            policyOffice: value,
-            policyOfficeCode: foundOffice.id,
-          };
-        }
-        break;
-      }
-      case "mrClass": {
-        const foundClass = dropdownData.mrClass.find(
-          (item) => item.value === value
-        );
-        if (foundClass) {
-          newData = {
-            ...newData,
-            mrClass: value,
-            mrClassCode: foundClass.id,
-            policyClass: value,
-            policyClassCode: foundClass.id,
-          };
-        }
-        break;
-      }
-      case "policyNumber": {
-        // Ensure policyNumber is a number and within range
-
-        const numOmp = parseInt(value, 10);
-        if (!isNaN(numOmp) && numOmp >= 1 && numOmp <= 9999) {
-          const strOmp = String(numOmp);
-          newData.policyNumber = strOmp;
-        } else if (value === "") {
-          // Allow clearing the field
-          newData.policyNumber = "";
-        } else {
-          return; // Prevent setting invalid number
-        }
-        break;
-      }
-      case "mrNumber": {
-        // Ensure mrNumber is a number and within range
-
-        const numOmp = parseInt(value, 10);
-        if (!isNaN(numOmp) && numOmp >= 1 && numOmp <= 9999) {
-          const strOmp = String(numOmp);
-          newData.mrNumber = strOmp;
-        } else if (value === "") {
-          // Allow clearing the field
-          newData.mrNumber = "";
-        } else {
-          return; // Prevent setting invalid number
-        }
-        break;
-      }
-      case "bank":
-      case "bankBranch":
-        // Allow letters, spaces, dot, comma for specific text fields
-        if (!/^[A-Za-z\s.,]*$/.test(value)) {
-          return; // Do not update state if invalid characters
-        }
-        break;
-      case "premium":
-      case "vat":
-      case "stamp":
-      case "coinsnet": {
-        // Ensure number
-        const num = parseFloat(value);
-        if (!isNaN(num)) {
-          newData[name] = num;
-        } else if (value === "") {
-          // Allow clearing the field
-          newData[name] = "";
-        } else {
-          return; // Prevent setting invalid number
-        }
-        break;
-      }
-    }
-
-    setData(newData);
-  };
-
-  // Effect to calculate policyNo
-  useEffect(() => {
-    if (
-      data.policyNumber &&
-      data.policyDate &&
-      data.policyOfficeCode &&
-      data.policyClassCode &&
-      data.coins
-    ) {
-      const formattedPolicyDate = moment(data.policyDate).format("/MM/YYYY");
-      const coInsAvailable = data.coins === "Co-Ins" ? `-(${data.coins})` : "";
-      setData((prev) => ({
-        ...prev,
-        policyNo: `BGIC/${prev.policyOfficeCode}/${prev.policyClassCode}-${prev.policyNumber}${formattedPolicyDate}${coInsAvailable}`,
-      }));
-    } else {
-      setData((prev) => ({ ...prev, policyNo: "" }));
-    }
-
-    if (data.policyClassCode !== "MC") {
-      setData((prev) => ({ ...prev, stamp: 0 }));
-    }
-    if (data.policyClassCode !== "MISC/OMP") {
-      setData((prev) => ({ ...prev, vat: 0 }));
-    }
-    if (data.coins !== "Co-Ins") {
-      setData((prev) => ({ ...prev, coinsnet: 0 }));
-    }
-  }, [
-    data.policyNumber,
-    data.policyDate,
-    data.policyOfficeCode,
-    data.policyClassCode,
-    data.coins,
-  ]);
-
-  // Effect to calculate mrNo
-  useEffect(() => {
-    if (data.mrNumber && data.mrDate && data.mrOfficeCode) {
-      setData((prev) => ({
-        ...prev,
-        mrNo: `${prev.mrOfficeCode}-${moment(prev.mrDate).year()}-${
-          prev.mrNumber
-        }`,
-      }));
-    } else {
-      setData((prev) => ({ ...prev, mrNo: "" }));
-    }
-  }, [data.mrNumber, data.mrDate, data.mrOfficeCode]);
-
-  // Effect to calculate premium
-  useEffect(() => {
-    const premium = Number(data.premium) || 0;
-    const vat = Number(data.vat) || 0;
-    const stamp = Number(data.stamp) || 0;
-    const coinsnet = Number(data.coinsnet) || 0;
-
-    setData((prev) => ({
-      ...prev,
-      total: premium + vat + stamp + coinsnet,
-    }));
-  }, [data.premium, data.vat, data.stamp, data.coinsnet]);
-
-  // handleKeyDown function for improved form navigation
-  const handleKeyDown = (e, nextId) => {
-    const el = e.target;
-    const tag = el.tagName;
-    const type = el.type;
-
-    // 🚫 Disable ↑↓ arrow keys for <select>, <input type="number">, and <input type="date">
-    if (
-      tag === "SELECT" ||
-      (tag === "INPUT" && (type === "number" || type === "date"))
-    ) {
-      if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-        e.preventDefault(); // prevent value change or dropdown navigation
-        return; // stop further handling
-      }
-    }
-
-    // ⏎ Handle Enter key: move focus to the next field by ID
-    if (e.key === "Enter") {
-      if (tag === "SELECT" && el.value) {
-        e.preventDefault(); // prevent form submission
-        const next = document.getElementById(nextId);
-        if (next) next.focus(); // move focus
-      } else if (tag === "INPUT") {
-        e.preventDefault(); // prevent form submission
-        const next = document.getElementById(nextId);
-        if (next) next.focus(); // move focus
-      }
-    }
-  };
-
-  // Search Policy
-  const handleSelectedItem = (item) => {
-    console.log("Selected:", item);
-
-    setData((prev) => ({
-      ...prev,
-      mrOffice: item.policyOffice,
-      mrOfficeCode: item.policyOfficeCode,
-      policyOffice: item.policyOffice,
-      policyOfficeCode: item.policyOfficeCode,
-      mrClass: item.policyClass,
-      mrClassCode: item.policyClassCode,
-      policyClass: item.policyClass,
-      policyClassCode: item.policyClassCode,
-      policyNumber: item.policyNumber,
-      policyDate: moment(item.policyDate).format("YYYY-MM-DD"),
-      policyNo: item.policyNo,
-      premium: item.premium,
-      vat: item.vat,
-      total: item.total,
-      coins: "N/A",
-    }));
+    setData({
+      ...data,
+      [name]: type === "checkbox" ? (checked ? 1 : 0) : value,
+    });
   };
 
   // SUBMIT SUBMIT SUBMIT SUBMIT SUBMIT
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    setLoading(true); // Set loading true on submit
+    setLoading(true);
 
     // Client-side validation before API call
-
+    // ... (Your existing validation logic) ...
     if (
       !data.mrNumber ||
       !data.mrDate ||
       !data.mrNo ||
-      !data.mrOffice ||
-      !data.mrOfficeCode ||
-      !data.mrClass ||
-      !data.mrClassCode ||
-      !data.receivedFrom ||
-      !data.policyOffice ||
-      !data.policyOfficeCode ||
-      !data.policyClass ||
-      !data.policyClassCode ||
+      !data.mrOfficeId ||
+      !data.mrClassId ||
       !data.policyNumber ||
       !data.policyDate ||
-      !data.coins ||
       !data.policyNo ||
       !data.premium ||
-      !data.mop
+      !data.mopId || // Corrected mop to mopId
+      !data.chequeDate
     ) {
-      setError("Please fill in all required fields.");
+      setError("Please fill in all required* fields.");
       setLoading(false);
       return;
     }
 
     try {
-      // Trimming string values before sending
-      const trimmedData = Object.fromEntries(
+      // trim string
+      const payload = Object.fromEntries(
         Object.entries(data).map(([key, value]) => [
           key,
           typeof value === "string" ? value.trim() : value,
         ])
       );
 
-      // API Call
       if (params.id) {
-        // Edit
-        await axios.patch(
-          `${config.apiUrl}/mr/${trimmedData.id}`,
-          trimmedData,
-          {
-            // Use trimmedData for patch
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-
-        toast.success(
-          <div>
-            <p className="font-bold">MR Updated.</p>
-            <p>{trimmedData.mrNo}</p>
-          </div>
-        );
-        navigate(`/mr/${trimmedData.id}`, { replace: true });
-      } else {
-        // Create
-        await axios.post(`${config.apiUrl}/mr`, trimmedData, {
-          // Use trimmedData for post
+        await axios.put(`${config.apiUrl}/mr/${params.id}`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
-
         toast.success(
           <div>
-            <p className="font-bold">MR Created.</p>
-            <p>{trimmedData.mrNo}</p>
+            <p className="font-bold">Money Receipt Updated.</p>
+            <p>{payload.mrNo}</p>
+          </div>
+        );
+        navigate(`/mr/${params.id}`, { replace: true });
+      } else {
+        await axios.post(`${config.apiUrl}/mr`, payload, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        toast.success(
+          <div>
+            <p className="font-bold">Money Receipt Created.</p>
+            <p>{payload.mrNo}</p>
           </div>
         );
         navigate("/mr", { replace: true });
@@ -418,581 +259,263 @@ export default function MRForm() {
     } catch (err) {
       setError(err.response?.data?.error || "Failed to submit data");
     } finally {
-      setLoading(false); // Always set loading false after API call
+      setLoading(false);
     }
   };
 
   return (
     <div className="flex flex-col items-center">
-      {" "}
       {/* Added padding for better mobile view */}
       <h1 className="text-4xl font-bold mb-6 text-blue-950">
-        {params.id ? "Update MR" : "Create New MR"}
-        {params.id ? (
-          ""
-        ) : (
-          <SearchModal onSelect={handleSelectedItem} token={token} />
-        )}
+        {params.id ? "Update Money Receipt" : "Create Money Receipt"}
       </h1>
       <form
         className=" grid grid-cols-1 gap-6 w-full  bg-white p-8 rounded-lg shadow-2xl" // Max width and shadow for better presentation
         onSubmit={handleSubmit}
       >
-        {/* Issuing */}
-        <div className="grid sm:grid-cols-2 gap-4">
+        {/* MR and Policy Info */}
+        <div className="grid sm:grid-cols-4 gap-4">
           {/* Issuing Office = Dropdown */}
-          <div className="sm:col-span-1">
-            <label
-              htmlFor="mrOffice"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              Issuing Office
-            </label>
-            <select
-              name="mrOffice"
-              value={data.mrOffice ?? ""}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              id="mrOffice"
-              tabIndex={1}
-              onKeyDown={(e) => handleKeyDown(e, "mrClass")}
-            >
-              <option value="" disabled>
-                Select Office
-              </option>
-              {dropdownData.mrOffice.map((item) => (
-                <option key={item.id} value={item.value}>
-                  {item.value}
-                </option>
-              ))}
-            </select>
-          </div>
+          <InputFieldDropDown
+            label={"Issuing Office"}
+            name={"mrOfficeId"}
+            colSpan={"sm:col-span-2"}
+            dropDownData={dropDown?.office}
+            dropDownOption={"officeName"}
+            handleChange={handleChange}
+            required={true}
+            value={data.mrOfficeId}
+          />
 
           {/* Class of Insurance = Dropdown */}
-          <div className="sm:col-span-1">
-            <label
-              htmlFor="mrClass"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              Class of Insurance
-            </label>
-            <select
-              name="mrClass"
-              value={data.mrClass ?? ""}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              id="mrClass"
-              tabIndex={1}
-              onKeyDown={(e) => handleKeyDown(e, "policyNumber")}
-            >
-              <option value="" disabled>
-                Select Class
-              </option>
-              {dropdownData.mrClass.map((item) => (
-                <option key={item.id} value={item.value}>
-                  {item.value}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <hr className="border-gray-300" />
-
-        {/* Issued Against */}
-        <div className="grid sm:grid-cols-3 gap-4">
-          {/* POlicy No. > Issued Against (Read-only) */}
-          <div className="sm:col-span-3">
-            <label
-              htmlFor="policyNo"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              Issued Against: Policy No
-            </label>
-            <input
-              type="text"
-              name="policyNo"
-              value={data.policyNo ?? ""}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-300 text-gray-700 cursor-not-allowed"
-              readOnly
-              disabled
-              placeholder="Auto-generated Policy No"
-              id="policyNo" // Added ID for consistency
-            />
-          </div>
+          <InputFieldDropDown
+            label={"Class of Insurance"}
+            name={"mrClassId"}
+            colSpan={"sm:col-span-2"}
+            dropDownData={dropDown?.class}
+            dropDownOption={"className"}
+            handleChange={handleChange}
+            required={true}
+            value={data.mrClassId}
+          />
 
           {/* Policy Number > Issued Against */}
-          <div className="sm:col-span-1">
-            <label
-              htmlFor="policyNumber"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              Policy Number
-            </label>
-            <input
-              type="number"
-              name="policyNumber"
-              onChange={handleChange}
-              value={data.policyNumber ?? ""}
-              min={1}
-              max={9999}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              placeholder="Enter Policy ID"
-              tabIndex={2}
-              onWheel={(e) => e.target.blur()} // Prevents number input from changing on scroll
-              id="policyNumber"
-              onKeyDown={(e) => handleKeyDown(e, "policyDate")}
-            />
-          </div>
+          <InputField
+            label={"Policy Number"}
+            name={"policyNumber"}
+            type={"number"}
+            required={true}
+            handleChange={handleChange}
+            value={data.policyNumber}
+          />
 
           {/* Policy Date > Issued Against */}
-          <div className="sm:col-span-1">
-            <label
-              htmlFor="policyDate"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              Policy Date
-            </label>
-            <input
-              type="date"
-              name="policyDate"
-              value={data.policyDate}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              tabIndex={3}
-              min="2000-01-01"
-              title="Date format: MM/DD/YYYY. Example: 12/31/2022"
-              id="policyDate"
-              onKeyDown={(e) => handleKeyDown(e, "coins")}
-            />
-          </div>
+          <InputFieldDate
+            label={"Policy Date"}
+            name={"policyDate"}
+            required={true}
+            handleChange={handleChange}
+            value={data?.policyDate}
+          />
 
-          {/* Co-Ins > Issued Against > Dropdown */}
-          <div className="sm:col-span-1">
-            <label
-              htmlFor="coins"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              Co-Ins
-            </label>
-            <select
-              name="coins"
-              value={data.coins ?? ""}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              id="coins"
-              tabIndex={1}
-              onKeyDown={(e) => handleKeyDown(e, "mrNumber")}
-            >
-              <option value="" disabled>
-                Select Co Ins
-              </option>
-              {dropdownData.coins.map((item) => (
-                <option key={item.id} value={item.value}>
-                  {item.value}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+          {/* POlicy No. > Issued Against (Read-only) */}
+          <InputField
+            label={"Policy No"}
+            name={"policyNo"}
+            colSpan={"sm:col-span-2"}
+            placeholder="Auto-generated Policy No"
+            required={true}
+            disabled={true}
+            value={data.policyNo}
+          />
 
-        <hr className="border-gray-300" />
-
-        {/* MR No. Section */}
-        <div className="grid sm:grid-cols-4 gap-4">
           {/* MR Number. */}
-          <div className="sm:col-span-1">
-            <label
-              htmlFor="mrNumber"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              MR Number
-            </label>
-            <input
-              type="number"
-              name="mrNumber"
-              onChange={handleChange}
-              value={data.mrNumber ?? ""}
-              min={1}
-              max={9999}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              placeholder="Enter MR ID"
-              tabIndex={2}
-              onWheel={(e) => e.target.blur()} // Prevents number input from changing on scroll
-              id="mrNumber"
-              onKeyDown={(e) => handleKeyDown(e, "mrDate")}
-            />
-          </div>
+          <InputField
+            label={"MR Number"}
+            name={"mrNumber"}
+            type={"number"}
+            required={true}
+            handleChange={handleChange}
+            value={data.mrNumber}
+          />
 
           {/* MR Date */}
-          <div className="sm:col-span-1">
-            <label
-              htmlFor="mrDate"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              MR Date
-            </label>
-            <input
-              type="date"
-              name="mrDate"
-              value={data.mrDate}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              tabIndex={3}
-              min="2000-01-01"
-              title="Date format: MM/DD/YYYY. Example: 12/31/2022"
-              id="mrDate"
-              onKeyDown={(e) => handleKeyDown(e, "receivedFrom")}
-            />
-          </div>
+          <InputFieldDate
+            label={"MR Date"}
+            name={"mrDate"}
+            className={""}
+            required={true}
+            handleChange={handleChange}
+            value={data?.mrDate}
+          />
 
           {/* MR No (Read-only) */}
-          <div className="sm:col-span-2">
-            <label
-              htmlFor="mrNo"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              MR No
-            </label>
-            <input
-              type="text"
-              name="mrNo"
-              value={data.mrNo ?? ""}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-300 text-gray-700 cursor-not-allowed"
-              readOnly
-              disabled
-              placeholder="Auto-generated MR No"
-              id="mrNo" // Added ID for consistency
-            />
-          </div>
-        </div>
+          <InputField
+            label={"MR No"}
+            name={"mrNo"}
+            colSpan={"sm:col-span-2"}
+            placeholder="Auto-generated MR No"
+            disabled={true}
+            required={true}
+            value={data.mrNo}
+          />
 
-        <hr className="border-gray-300" />
+          {/*  Client -> Client Dropdown */}
+          <InputFieldDropDown
+            label={"Client Name"}
+            name={"clientId"}
+            colSpan={"sm:col-span-2"}
+            dropDownData={dropDown?.client}
+            dropDownOption={"name"}
+            handleChange={handleChange}
+            // required={true}
+            value={data.clientId}
+          />
 
-        {/* Received From*/}
-        <div>
-          <label
-            htmlFor="receivedFrom"
-            className="block mb-1 font-medium text-gray-700"
-          >
-            Received From
-          </label>
-          <input
-            type="text"
-            required
-            className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-            value={data.receivedFrom ?? ""}
-            onChange={handleChange}
-            name="receivedFrom"
-            placeholder="Received with thanks from"
-            title="Received with thanks from"
-            tabIndex={12}
-            id="receivedFrom"
-            onKeyDown={(e) => handleKeyDown(e, "premium")}
+          {/* Client -> Received From */}
+          <InputField
+            label={"Extra information of client"}
+            name={"receivedFrom"}
+            colSpan={"sm:col-span-2"}
+            handleChange={handleChange}
+            value={data.receivedFrom}
           />
         </div>
 
         <hr className="border-gray-300" />
 
-        {/* Premium*/}
-        <div className="grid sm:grid-cols-3 gap-4 items-end">
-          {/* Premium */}
-          <div className="sm:col-span-1">
-            <label
-              htmlFor="premium"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              Premium
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              name="premium"
-              required
-              min={1}
-              inputMode="numeric"
-              value={data.premium ?? ""}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              placeholder="Enter Premium Amount"
-              title="Enter Premium Amount"
-              tabIndex={17}
-              onWheel={(e) => e.target.blur()}
-              id="premium"
-              onKeyDown={(e) => handleKeyDown(e, "stamp")}
+        {/* Premium and Bank Info */}
+        <div className="grid sm:grid-cols-4 gap-4 items-end">
+          <div className="sm:col-span-full sm:col-start-2 flex justify-around mb-2">
+            <InputFieldCheckbox
+              label="Co Ins"
+              name="isCoins"
+              checked={data.isCoins === 1}
+              handleChange={handleChange}
+            />
+            <InputFieldCheckbox
+              label="Stamp"
+              name="isStamp"
+              checked={data.isStamp === 1}
+              handleChange={handleChange}
+            />
+            <InputFieldCheckbox
+              label="Vat"
+              name="isVat"
+              checked={data.isVat === 1}
+              handleChange={handleChange}
             />
           </div>
 
-          {/* Stamp */}
-          <div className="sm:col-span-1">
-            <label
-              htmlFor="stamp"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              Stamp
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              name="stamp"
-              readOnly={data.mrClassCode !== "MC"}
-              required
-              min={1}
-              inputMode="numeric"
-              value={data.stamp ?? ""}
-              onChange={handleChange}
-              className={
-                data.mrClassCode !== "MC"
-                  ? "w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-300 text-gray-700 cursor-not-allowed"
-                  : "w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              }
-              placeholder="Enter Stamp Amount"
-              title="Enter Stamp Amount"
-              tabIndex={17}
-              onWheel={(e) => e.target.blur()}
-              id="stamp"
-              onKeyDown={(e) => handleKeyDown(e, "coinsnet")}
-            />
-          </div>
+          {/* Premium */}
+          <InputField
+            label={"Premium"}
+            name={"premium"}
+            required={true}
+            type={"number"}
+            colSpan={"sm:col-span-1 sm:col-start-1"}
+            handleChange={handleChange}
+            value={data.premium}
+          />
 
           {/* CoIns(Net) */}
-          <div className="sm:col-span-1">
-            <label
-              htmlFor="coinsnet"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              CoIns(Net)
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              name="coinsnet"
-              readOnly={data.coins !== "Co-Ins"}
-              required
-              min={1}
-              inputMode="numeric"
-              value={data.coinsnet ?? ""}
-              onChange={handleChange}
-              className={
-                data.coins !== "Co-Ins"
-                  ? "w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-300 text-gray-700 cursor-not-allowed"
-                  : "w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              }
-              placeholder="Enter CoIns(net) Amount"
-              title="Enter CoIns(net) Amount"
-              tabIndex={17}
-              onWheel={(e) => e.target.blur()}
-              id="coinsnet"
-              onKeyDown={(e) => handleKeyDown(e, "vat")}
-            />
-          </div>
+          <InputField
+            label={"CoIns(Net)"}
+            name={"coinsnet"}
+            type={"number"}
+            disabled={data.isCoins == 0}
+            handleChange={handleChange}
+            value={data.coinsnet}
+          />
+
+          {/* Stamp */}
+          <InputField
+            label={"Stamp"}
+            name={"stamp"}
+            type={"number"}
+            disabled={data.isStamp == 0}
+            handleChange={handleChange}
+            value={data.stamp}
+          />
 
           {/* Vat */}
-          <div className="sm:col-span-1">
-            <label
-              htmlFor="vat"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              Vat
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              name="vat"
-              readOnly={data.mrClassCode !== "MISC/OMP"}
-              required
-              min={1}
-              inputMode="numeric"
-              value={data.vat ?? ""}
-              onChange={handleChange}
-              className={
-                data.mrClassCode !== "MISC/OMP"
-                  ? "w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-300 text-gray-700 cursor-not-allowed"
-                  : "w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              }
-              placeholder="Enter Vat Amount"
-              title="Enter Vat Amount"
-              tabIndex={17}
-              onWheel={(e) => e.target.blur()}
-              id="vat"
-              onKeyDown={(e) => handleKeyDown(e, "mop")}
-            />
-          </div>
+          <InputField
+            label={"Vat"}
+            name={"vat"}
+            disabled={data.isVat == 0}
+            type={"number"}
+            handleChange={handleChange}
+            value={data.vat}
+          />
 
           {/* Total (Read-only) */}
-          <div className="sm:col-span-1">
-            <label
-              htmlFor="total"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              Total
-            </label>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={Number(data.total).toFixed(2)} // Calculate and format
-              readOnly
-              disabled
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-300 text-gray-700 cursor-not-allowed"
-              id="total" // Added ID for consistency
-            />
-          </div>
-        </div>
+          <InputField
+            label={"Total"}
+            type={"number"}
+            disabled={true}
+            value={totalAmount}
+          />
 
-        <hr className="border-gray-300" />
-
-        {/* Bank Info */}
-        <div className="grid sm:grid-cols-2 gap-4 items-end">
           {/* MOP */}
-          <div className="sm:col-span-1">
-            <label
-              htmlFor="mop"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              MOP
-            </label>
-            <select
-              name="mop"
-              value={data.mop ?? ""}
-              onChange={handleChange}
-              title="Method Of Payment"
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              tabIndex={20}
-              id="mop"
-              onKeyDown={(e) => handleKeyDown(e, "chequeNo")}
-            >
-              <option value="" disabled>
-                Select MOP
-              </option>
-              {dropdownData.mop.map((item) => (
-                <option key={item.id} value={item.value}>
-                  {item.value}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Cheque No. */}
-          <div className="sm:col-span-1">
-            <label
-              htmlFor="chequeNo"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              Cheque No.
-            </label>
-            <input
-              type="text"
-              name="chequeNo"
-              required={data.mop === "Cheque"} // Make required only if MOP is Cheque
-              value={data.chequeNo ?? ""}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              placeholder="Enter Cheque No."
-              tabIndex={21}
-              id="chequeNo"
-              onKeyDown={(e) => handleKeyDown(e, "chequeDate")}
-            />
-          </div>
+          <InputFieldDropDown
+            label={"MOP"}
+            name={"mopId"}
+            colSpan={"sm:col-span-1 sm:col-start-1"}
+            dropDownData={dropDown?.mop}
+            dropDownOption={"name"}
+            handleChange={handleChange}
+            required={true}
+            value={data.mopId}
+          />
 
           {/* Cheque Date */}
-          <div className="sm:col-span-1">
-            <label
-              htmlFor="chequeDate"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              Cheque Date
-            </label>
-            <input
-              type="date"
-              name="chequeDate"
-              value={data.chequeDate}
-              onChange={handleChange}
-              // required={data.mop === "Cheque"} // Make required only if MOP is Cheque
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              tabIndex={22}
-              min="2000-01-01"
-              title="Date format: MM/DD/YYYY. Example: 12/31/2022"
-              id="chequeDate"
-              onKeyDown={(e) => handleKeyDown(e, "bank")}
-            />
-          </div>
+          <InputFieldDate
+            label={"Payment / Cheque Date"}
+            name={"chequeDate"}
+            required={true}
+            handleChange={handleChange}
+            value={data?.chequeDate}
+          />
+
+          {/* Cheque No */}
+          <InputField
+            label={"Cheque No / Reference"}
+            name={"chequeNo"}
+            handleChange={handleChange}
+            value={data.chequeNo}
+          />
 
           {/* Bank */}
-          <div className="sm:col-span-1">
-            <label
-              htmlFor="bank"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              Bank
-            </label>
-            <input
-              type="text"
-              name="bank"
-              required={data.mop === "Cheque"} // Make required only if MOP is Cheque
-              value={data.bank ?? ""}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              placeholder="Enter Bank Name"
-              tabIndex={23}
-              id="bank"
-              onKeyDown={(e) => handleKeyDown(e, "bankBranch")}
-            />
-          </div>
+          <InputFieldDropDown
+            label={"Bank"}
+            name={"bankId"}
+            dropDownData={dropDown?.bank}
+            dropDownOption={"name"}
+            handleChange={handleChange}
+            value={data.bankId}
+          />
 
           {/* Branch */}
-          <div className="sm:col-span-1">
-            <label
-              htmlFor="bankBranch"
-              className="block mb-1 font-medium text-gray-700"
-            >
-              Branch
-            </label>
-            <input
-              type="text"
-              name="bankBranch"
-              // required={data.mop === "Cheque"} // Make required only if MOP is Cheque
-              value={data.bankBranch ?? ""}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              placeholder="Enter Bank's Branch Name"
-              tabIndex={24}
-              id="bankBranch"
-              onKeyDown={(e) => handleKeyDown(e, "note")}
+          {data.bankId && (
+            <InputFieldDropDown
+              label={"Bank Branch"}
+              name={"bankbranchId"}
+              dropDownData={dropDown?.bankbranch}
+              dropDownOption={"name"}
+              handleChange={handleChange}
+              value={data.bankbranchId}
             />
-          </div>
-        </div>
+          )}
 
-        {/* Note */}
-        <div>
-          <label
-            htmlFor="note"
-            className="block mb-1 font-medium text-gray-700"
-          >
-            Note
-          </label>
-          <input
-            type="text"
-            name="note"
-            onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-            value={data.note ?? ""}
-            placeholder="Any additional notes..."
-            tabIndex={25}
-            id="note"
-            onKeyDown={(e) => handleKeyDown(e, "submitButton")}
+          {/* Note */}
+          <InputField
+            label={"Note"}
+            name={"note"}
+            colSpan={"sm:col-span-4"}
+            handleChange={handleChange}
+            value={data.note}
           />
         </div>
-
-        <hr className="border-gray-300" />
 
         {/* Submit */}
         <div className="flex justify-center mt-4">
@@ -1002,13 +525,132 @@ export default function MRForm() {
               loading ? "opacity-50 cursor-not-allowed" : ""
             }`}
             tabIndex={26}
-            id="submitButton"
             disabled={loading} // Disable button when loading
           >
-            {loading ? "Processing..." : params.id ? "Update MR" : "Create MR"}
+            {loading ? "Processing..." : params.id ? "Update" : "Create"}
           </button>
         </div>
       </form>
     </div>
+  );
+}
+
+// Components
+function InputFieldDate({
+  handleChange,
+  value,
+  required = false,
+  className,
+  colSpan = "sm:col-span-1",
+  name,
+  label,
+}) {
+  return (
+    <div className={`${colSpan} ${className}`}>
+      <label className="block mb-1 font-medium text-gray-700">
+        {label}
+        {required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
+      <input
+        type="date"
+        name={name}
+        value={moment(value || new Date()).format("YYYY-MM-DD")}
+        onChange={handleChange}
+        required={required}
+        className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+        min="2000-01-01"
+      />
+    </div>
+  );
+}
+
+function InputFieldDropDown({
+  handleChange,
+  value,
+  required = false,
+  className = "",
+  colSpan = "sm:col-span-1",
+  name,
+  label,
+  dropDownData,
+  dropDownOption,
+}) {
+  return (
+    <div className={`${colSpan} ${className}`}>
+      <label className="block mb-1 font-medium text-gray-700">
+        {label}
+        {required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
+      <select
+        name={name}
+        value={value ?? ""}
+        onChange={handleChange}
+        required={required}
+        className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+      >
+        <option value="" className="text-gray-400" disabled>
+          Select {label}
+        </option>
+        {dropDownData &&
+          dropDownData.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item[dropDownOption]}
+            </option>
+          ))}
+        <option value="" className="text-gray-400">
+          Null
+        </option>
+      </select>
+    </div>
+  );
+}
+
+function InputField({
+  handleChange = () => {},
+  value,
+  required = false,
+  className = "",
+  colSpan = "sm:col-span-1",
+  name,
+  label,
+  type = "text",
+  disabled = false,
+  placeholder,
+}) {
+  return (
+    <div className={`${colSpan} ${className}`}>
+      <label className="block mb-1 font-medium text-gray-700">
+        {label}
+        {required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
+      <input
+        type={type}
+        name={name}
+        onChange={handleChange}
+        value={value ?? ""}
+        required={required}
+        className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-black"
+        placeholder={placeholder ?? `Enter ${label}`}
+        disabled={disabled}
+        onWheel={(e) => e.target.blur()}
+      />
+    </div>
+  );
+}
+
+function InputFieldCheckbox({ label, name, checked, handleChange = () => {} }) {
+  return (
+    <label className="flex items-center space-x-2 cursor-pointer">
+      <input
+        type="checkbox"
+        name={name}
+        checked={checked}
+        onChange={handleChange}
+        className="w-4 h-4 border border-gray-300 rounded-md shadow-sm bg-gray-50 
+                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                   transition duration-150 ease-in-out"
+      />
+      <span>{label}</span>
+    </label>
   );
 }
