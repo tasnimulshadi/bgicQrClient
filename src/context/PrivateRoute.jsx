@@ -1,6 +1,7 @@
 // src/context/PrivateRoute.jsx
 import { Navigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
+import Loading from "../components/Loading";
 
 const PrivateRoute = ({ children, allowedRoles }) => {
   const { isAuthenticated, justLoggedOut, user } = useAuth();
@@ -8,14 +9,14 @@ const PrivateRoute = ({ children, allowedRoles }) => {
   // 1. Not logged in
   if (!isAuthenticated) {
     if (justLoggedOut) {
-      return <Navigate to="/bgichologin" replace />;
+      return <Navigate to="/login" replace />;
     }
     return <Navigate to="/" replace />;
   }
 
   // 2. Logged in but no role info yet (still loading user)
   if (!user) {
-    return <div>Loading...</div>; // or a spinner
+    return <Loading />; // or a spinner
   }
 
   // 3. Role check

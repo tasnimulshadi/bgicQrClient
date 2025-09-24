@@ -1,7 +1,6 @@
-import React from "react";
 import { FaExclamationTriangle } from "react-icons/fa";
 
-export default function DeleteModal({ isOpen, onClose, onConfirm, record }) {
+export default function ModalDelete({ isOpen, onClose, onConfirm, record }) {
   if (!isOpen) return null;
 
   return (
@@ -13,8 +12,7 @@ export default function DeleteModal({ isOpen, onClose, onConfirm, record }) {
         </div>
 
         <p className="text-gray-700 mb-6">
-          Are you sure you want to delete this record{" "}
-          <span className="font-bold">{record?.id}</span>? This action cannot be
+          Are you sure you want to delete this record. This action cannot be
           undone.
         </p>
 

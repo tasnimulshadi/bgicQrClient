@@ -3,17 +3,14 @@ import Navbar from "./components/Navbar";
 import PrivateRoute from "./context/PrivateRoute";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
-import OMPList from "./pages/OMP/OMPList";
-import OMPForm from "./pages/OMP/OMPForm";
-import OMP from "./pages/OMP/OMP";
 import NotFound from "./pages/NotFound";
 import { ToastContainer } from "react-toastify";
-import MRList from "./pages/MR/MRList";
-import MRForm from "./pages/MR/MRForm";
-import MR from "./pages/MR/MR";
-import FieldSettings from "./pages/Fields/FieldSettings";
-import FieldSettingList from "./pages/Fields/FieldSettingList";
-import ClientField from "./pages/Fields/ClientField";
+import ClaimList from "./pages/Claim/ClaimList";
+import ClaimForm from "./pages/Claim/ClaimForm";
+import Claim from "./pages/Claim/Claim";
+import Fields from "./pages/Fields/Fields";
+import FieldList from "./pages/Fields/FieldList";
+import config from "./utility/config";
 
 function App() {
   return (
@@ -28,104 +25,72 @@ function App() {
           {" "}
           {/*  bg-gray-50 */}
           <Routes>
-            <Route path="/bgichologin" element={<Login />} />
+            <Route path="/login" element={<Login />} />
             <Route
               path="/dashboard"
               element={
-                <PrivateRoute allowedRoles={["admin", "all", "omp", "mr"]}>
+                <PrivateRoute allowedRoles={config.roles.level_4}>
                   <Dashboard />
                 </PrivateRoute>
               }
             />
 
-            {/* OMP */}
             <Route
-              path="/omp"
+              path="/claim"
               element={
-                <PrivateRoute allowedRoles={["admin", "all", "omp"]}>
-                  <OMPList />
-                </PrivateRoute>
-              }
-            />
-            {/* MR */}
-            <Route
-              path="/mr"
-              element={
-                <PrivateRoute allowedRoles={["admin", "all", "mr"]}>
-                  <MRList />
+                <PrivateRoute allowedRoles={config.roles.level_4}>
+                  <ClaimList />
                 </PrivateRoute>
               }
             />
 
-            {/* OMP */}
             <Route
-              path="/omp/new"
+              path="/claim/:id"
               element={
-                <PrivateRoute allowedRoles={["admin", "all", "omp"]}>
-                  <OMPForm />
-                </PrivateRoute>
-              }
-            />
-            {/* MR */}
-            <Route
-              path="/mr/new"
-              element={
-                <PrivateRoute allowedRoles={["admin", "all", "mr"]}>
-                  <MRForm />
+                <PrivateRoute allowedRoles={config.roles.level_4}>
+                  <Claim />
                 </PrivateRoute>
               }
             />
 
-            {/* OMP */}
             <Route
-              path="/omp/edit/:id"
+              path="/claim/new"
               element={
-                <PrivateRoute allowedRoles={["admin", "all", "omp"]}>
-                  <OMPForm />
-                </PrivateRoute>
-              }
-            />
-            {/* MR */}
-            <Route
-              path="/mr/edit/:id"
-              element={
-                <PrivateRoute allowedRoles={["admin", "all", "mr"]}>
-                  <MRForm />
+                <PrivateRoute allowedRoles={config.roles.level_3}>
+                  <ClaimForm />
                 </PrivateRoute>
               }
             />
 
-            {/* Others */}
             <Route
-              path="/field-settings"
+              path="/claim/edit/:id"
               element={
-                <PrivateRoute allowedRoles={["admin", "all", "omp", "mr"]}>
-                  <FieldSettings />
+                <PrivateRoute allowedRoles={config.roles.level_3}>
+                  <ClaimForm />
+                </PrivateRoute>
+              }
+            />
+
+            {/* Fields */}
+            <Route
+              path="/fields"
+              element={
+                <PrivateRoute allowedRoles={config.roles.level_3}>
+                  <Fields />
                 </PrivateRoute>
               }
             />
             <Route
-              path="/field-settings/:field"
+              path="/fields/list"
               element={
-                <PrivateRoute allowedRoles={["admin", "all", "omp", "mr"]}>
-                  <FieldSettingList />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/field-settings/client"
-              element={
-                <PrivateRoute allowedRoles={["admin", "all", "omp", "mr"]}>
-                  <ClientField />
+                <PrivateRoute allowedRoles={config.roles.level_3}>
+                  <FieldList />
                 </PrivateRoute>
               }
             />
 
             {/* this one stays public */}
-            {/* OMP */}
-            <Route path="/omp/:id" element={<OMP />} />
-            {/* MR */}
-            <Route path="/mr/:id" element={<MR />} />
+            {/* <Route path="/mr/:id" element={<MR />} /> */}
 
             <Route path="*" element={<NotFound />} />
           </Routes>

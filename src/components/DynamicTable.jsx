@@ -1,6 +1,14 @@
 import { useAuth } from "../context/AuthContext";
 
-function DynamicTable({ data, onEdit, onDelete, hiddenColumns = [] }) {
+function DynamicTable({
+  data,
+  onEdit,
+  onDelete,
+  hiddenColumns = [],
+  itemsPerPage,
+  currentPage,
+  fieldData,
+}) {
   const { user } = useAuth();
 
   if (!data || data.length === 0) {
@@ -13,19 +21,22 @@ function DynamicTable({ data, onEdit, onDelete, hiddenColumns = [] }) {
   );
 
   return (
-    <div className="w-full bg-white rounded-lg shadow-xl">
-      <table className="min-w-full divide-y divide-gray-200 table-auto">
+    <div className="w-full bg-white rounded-lg shadow-xl overflow-x-auto">
+      <table className="min-w-full divide-y divide-gray-200 table-auto ">
         <thead className="bg-blue-950 text-white">
           <tr>
+            <th className="text-left px-4 py-3 text-sm font-semibold uppercase tracking-wider">
+              SL
+            </th>
             {columns.map((col) => (
               <th
                 key={col}
-                className="text-left px-4 py-3 text-sm font-semibold capitalize tracking-wider"
+                className="text-left px-4 py-3 text-sm font-semibold uppercase tracking-wider"
               >
                 {col}
               </th>
             ))}
-            <th className="text-right px-4 py-3 text-sm font-semibold capitalize tracking-wider">
+            <th className="text-right px-4 py-3 text-sm font-semibold uppercase tracking-wider">
               Action
             </th>
           </tr>
@@ -38,6 +49,9 @@ function DynamicTable({ data, onEdit, onDelete, hiddenColumns = [] }) {
                 rowIndex % 2 === 0 ? "bg-gray-50" : "bg-white"
               } hover:bg-blue-100`}
             >
+              <td className="px-4 py-3 text-sm text-gray-800 break-words max-w-[200px]">
+                {(currentPage - 1) * itemsPerPage + rowIndex + 1}
+              </td>
               {columns.map((col) => (
                 <td
                   key={col}
@@ -48,13 +62,16 @@ function DynamicTable({ data, onEdit, onDelete, hiddenColumns = [] }) {
               ))}
               <td className="px-4 py-3 text-right text-sm font-medium whitespace-nowrap">
                 <div className="flex justify-end gap-2">
-                  <button
-                    onClick={() => onEdit(row)}
-                    className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-                  >
-                    Edit
-                  </button>
-                  {(user?.role === "admin" || user?.role === "all") && (
+                  {fieldData?.allowedRolesForEdit?.includes(user?.role) && (
+                    <button
+                      onClick={() => onEdit(row)}
+                      className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                    >
+                      Edit
+                    </button>
+                  )}
+
+                  {fieldData?.allowedRolesForDelete?.includes(user?.role) && (
                     <button
                       onClick={() => onDelete(row)}
                       className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600"

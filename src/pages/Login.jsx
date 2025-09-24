@@ -12,8 +12,8 @@ import { toast } from "react-toastify"; // Import toast for notifications
  * and manages user session using AuthContext.
  */
 function Login() {
-  const [username, setUsername] = useState(""); // State for user ID input
-  const [password, setPassword] = useState(""); // State for password input
+  const [username, setUsername] = useState("admin"); // State for user ID input
+  const [password, setPassword] = useState("123"); // State for password input
   const [loading, setLoading] = useState(false);
 
   const { login, token } = useAuth(); // Access login function and token from AuthContext
@@ -21,7 +21,6 @@ function Login() {
 
   // Effect hook to redirect to dashboard if already authenticated
   useEffect(() => {
-    document.title = `BGIC - QR Login`; // Set document title
     if (token) {
       navigate("/dashboard"); // Redirect if a token exists (user is already logged in)
     }
@@ -79,9 +78,7 @@ function Login() {
           {/* Larger, bolder title */}
           Welcome Back!
         </h1>
-        <p className="text-center text-gray-600 mb-6">
-          Please log in to your account.
-        </p>
+        <p className="text-center text-gray-600 mb-6">Please log in.</p>
 
         {/* User ID Input */}
         <div>

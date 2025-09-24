@@ -57,7 +57,7 @@ export default function ModalForm({
                 name={field}
                 value={formData[field] || ""}
                 onChange={handleChange}
-                required
+                required={field == "name"}
                 disabled={field === "id"}
                 className={`w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out ${
                   field === "id"

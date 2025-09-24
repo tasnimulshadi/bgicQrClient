@@ -87,3 +87,66 @@ export function convertAmountToWords(amount) {
 
   return convert(integer);
 }
+
+export function getFileIcon(filePath) {
+  if (!filePath) return "/assets/icons/document.png"; // default if no file
+
+  const ext = filePath.split(".").pop().toLowerCase();
+
+  switch (ext) {
+    case "pdf":
+      return "/assets/icons/pdf.png";
+    case "doc":
+    case "docx":
+      return "/assets/icons/doc.png";
+    case "xls":
+    case "xlsx":
+    case "csv":
+      return "/assets/icons/xls.png";
+    case "jpg":
+    case "jpeg":
+    case "png":
+    case "gif":
+      return "/assets/icons/jpg.png";
+    default:
+      return "/assets/icons/document.png"; // default icon
+  }
+}
+
+// Get filename from full path
+export function getFileNameFromFullPath(filePath) {
+  if (!filePath) return "";
+  return filePath.split("/").pop();
+}
+
+// Group files by category
+export function groupFilesByCategory(files = []) {
+  const grouped = Object.values(
+    (files || []).reduce((acc, row) => {
+      const category = row.category_name || "Uncategorized";
+      if (!acc[category]) acc[category] = { category, files: [] };
+      acc[category].files.push(row);
+      return acc;
+    }, {})
+  );
+
+  // Sort categories alphabetically, move 'Uncategorized' and 'Final Survey Report' to bottom
+  grouped.sort((a, b) => {
+    const order = ["Uncategorized", "Final Survey Report"];
+
+    if (a.category === b.category) return 0;
+
+    // Push 'Uncategorized' and 'Final Survey Report' to the end
+    if (order.includes(a.category)) return 1;
+    if (order.includes(b.category)) return -1;
+
+    return a.category.localeCompare(b.category);
+  });
+
+  // Optionally: sort files inside each category by name
+  // grouped.forEach((group) => {
+  //   group.files.sort((a, b) => a.name.localeCompare(b.name));
+  // });
+
+  return grouped;
+}
